@@ -1,0 +1,28 @@
+{
+  "name": "vue-img",
+  "version": "2.6.1",
+  "description": "hash2path wrapper for vue 2",
+  "main": "dist/vue-img.js",
+  "scripts": {
+    "dev": "rollup --config build/rollup.config.js --es5 & rollup --config build/rollup.config.js --es6",
+    "test": "karma start build/karma.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/banricho/vue-img.git"
+  },
+  "author": "banricho",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "karma": "^1.3.0",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-mocha": "^1.2.0",
+    "karma-mocha-reporter": "^2.2.0",
+    "mocha": "^3.1.2",
+    "rollup": "^0.36.3",
+    "rollup-plugin-buble": "^0.14.0",
+    "rollup-plugin-eslint": "^3.0.0"
+  }
+}

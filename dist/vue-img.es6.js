@@ -14,8 +14,19 @@ VueImg$1.cdn = protocol + (env ? `fuss${env[0]}` : 'fuss10.elemecdn.com');
 // Translate hash to path
 const hashToPath = hash => hash.replace(/^(\w)(\w\w)(\w{29}(\w*))$/, '/$1/$2/$3.$4');
 
+// Get image format
+const getFormat = ({ format, fallback }) => {
+  const isFormat = /^(jpg|jpeg|png|gif)$/;
+
+  if (isFormat.test(format)) return `format/${format}/`
+  if (VueImg$1.canWebp) return 'format/webp/'
+  return isFormat.test(fallback)
+    ? `format/${fallback}/`
+    : ''
+};
+
 // Get image size
-const getSize = (width, height) => {
+const getSize = ({ width, height }) => {
   const thumb = 'thumbnail/';
   const cover = `${width}x${height}`;
 
@@ -26,14 +37,20 @@ const getSize = (width, height) => {
 };
 
 // Get image size
-const getSrc = ({ hash, width, height, prefix, suffix, quality, disableWebp } = {}) => {
+const getSrc = ({
+  hash,
+  width, height, quality,
+  format, fallback,
+  prefix, suffix,
+} = {}) => {
   if (!hash || typeof hash !== 'string') return ''
 
   const _prefix = typeof prefix === 'string' ? prefix : VueImg$1.cdn;
-  const _suffix = typeof suffix === 'string' ? suffix : '';
   const _quality = typeof quality === 'number' ? `quality/${quality}/` : '';
-  const _format = !disableWebp && VueImg$1.canWebp ? 'format/webp/' : '';
-  const params = `${_quality}${_format}${getSize(width, height)}${_suffix}`;
+  const _format = getFormat({ format, fallback });
+  const _size = getSize({ width, height });
+  const _suffix = typeof suffix === 'string' ? suffix : '';
+  const params = `${_quality}${_format}${_size}${_suffix}`;
 
   return _prefix + hashToPath(hash) + (params ? `?imageMogr/${params}` : '')
 };
@@ -59,6 +76,7 @@ const setAttr = (el, src, tag) => {
 var getImageClass = (opt = {}) => {
   class GlobalOptions {
     constructor() {
+      // Global
       copyKeys({
         source: opt,
         target: this,
@@ -66,21 +84,20 @@ var getImageClass = (opt = {}) => {
           'loading', 'error',
           'quality',
           'prefix', 'suffix',
-          'disableWebp',
         ],
       });
     }
 
     hashToSrc(hash) {
       const params = { hash };
-
+      // Get src
       copyKeys({
         source: this,
         target: params,
         keys: [
           'width', 'height', 'quality',
+          'format', 'fallback',
           'prefix', 'suffix',
-          'disableWebp',
         ],
       });
       return getSrc(params)
@@ -94,14 +111,15 @@ var getImageClass = (opt = {}) => {
         : { hash: value };
 
       super();
+      // Directive
       copyKeys({
         source: params,
         target: this,
         keys: [
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
+          'format', 'fallback',
           'prefix', 'suffix',
-          'disableWebp',
         ],
       });
     }

@@ -51,15 +51,16 @@ VueImg.getSrc({ ... }) // [Function] 获取图片地址
 
 名称 | 描述 | 全局配置 | 指令参数 | getSrc 函数
 --- | --- | --- | --- | ---
-hash | [String] 图片哈希（必填）| 不支持 | 支持 | 支持
-width | [Number] 宽度 | 不支持 | 支持 | 支持
-height | [Number] 高度 | 不支持 | 支持 | 支持
-quality | [Number] 图片质量 | 支持 | 支持 | 支持
-prefix | [String] CDN 地址前缀 | 支持 | 支持 | 支持
-suffix | [String] CDN 处理后缀 [?] | 支持 | 支持 | 支持
-loading | [String] 加载中默认图片哈希 | 支持 | 支持 | 不支持
-error | [String] 失败替换图片哈希 | 支持 | 支持 | 不支持
-disableWebp | [Boolean] 禁用 webP | 支持 | 支持 | 支持
+hash | [String] 图片哈希（必填）| ✕ | 〇 | 〇
+width | [Number] 宽度 | ✕ | 〇 | 〇
+height | [Number] 高度 | ✕ | 〇 | 〇
+format | [String] 强制图片格式 | ✕ | 〇 | 〇
+fallback | [String] 不支持 webP 时转换格式 | ✕ | 〇 | 〇
+quality | [Number] 图片质量 | 〇 | 〇 | 〇
+prefix | [String] CDN 地址前缀 | 〇 | 〇 | 〇
+suffix | [String] CDN 处理后缀 [?] | 〇 | 〇 | 〇
+loading | [String] 加载中默认图片哈希 | 〇 | 〇 | ✕
+error | [String] 失败替换图片哈希 | 〇 | 〇 | ✕
 
 - `suffix` 参数可用于模糊、旋转等特殊处理，具体请参考[《七牛 CDN 开发者文档》](http://developer.qiniu.com/code/v6/api/kodo-api/image/imagemogr2.html)。
 

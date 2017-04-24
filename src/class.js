@@ -4,6 +4,7 @@ import getSrc from './src'
 export default (opt = {}) => {
   class GlobalOptions {
     constructor() {
+      // Global
       copyKeys({
         source: opt,
         target: this,
@@ -11,21 +12,20 @@ export default (opt = {}) => {
           'loading', 'error',
           'quality',
           'prefix', 'suffix',
-          'disableWebp',
         ],
       })
     }
 
     hashToSrc(hash) {
       const params = { hash }
-
+      // Get src
       copyKeys({
         source: this,
         target: params,
         keys: [
           'width', 'height', 'quality',
+          'format', 'fallback',
           'prefix', 'suffix',
-          'disableWebp',
         ],
       })
       return getSrc(params)
@@ -39,14 +39,15 @@ export default (opt = {}) => {
         : { hash: value }
 
       super()
+      // Directive
       copyKeys({
         source: params,
         target: this,
         keys: [
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
+          'format', 'fallback',
           'prefix', 'suffix',
-          'disableWebp',
         ],
       })
     }

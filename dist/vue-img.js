@@ -20,8 +20,25 @@ VueImg$1.cdn = protocol + (env ? ("fuss" + (env[0])) : 'fuss10.elemecdn.com');
 // Translate hash to path
 var hashToPath = function (hash) { return hash.replace(/^(\w)(\w\w)(\w{29}(\w*))$/, '/$1/$2/$3.$4'); };
 
+// Get image format
+var getFormat = function (ref) {
+  var format = ref.format;
+  var fallback = ref.fallback;
+
+  var isFormat = /^(jpg|jpeg|png|gif)$/;
+
+  if (isFormat.test(format)) { return ("format/" + format + "/") }
+  if (VueImg$1.canWebp) { return 'format/webp/' }
+  return isFormat.test(fallback)
+    ? ("format/" + fallback + "/")
+    : ''
+};
+
 // Get image size
-var getSize = function (width, height) {
+var getSize = function (ref) {
+  var width = ref.width;
+  var height = ref.height;
+
   var thumb = 'thumbnail/';
   var cover = width + "x" + height;
 
@@ -37,18 +54,20 @@ var getSrc = function (ref) {
   var hash = ref.hash;
   var width = ref.width;
   var height = ref.height;
+  var quality = ref.quality;
+  var format = ref.format;
+  var fallback = ref.fallback;
   var prefix = ref.prefix;
   var suffix = ref.suffix;
-  var quality = ref.quality;
-  var disableWebp = ref.disableWebp;
 
   if (!hash || typeof hash !== 'string') { return '' }
 
   var _prefix = typeof prefix === 'string' ? prefix : VueImg$1.cdn;
-  var _suffix = typeof suffix === 'string' ? suffix : '';
   var _quality = typeof quality === 'number' ? ("quality/" + quality + "/") : '';
-  var _format = !disableWebp && VueImg$1.canWebp ? 'format/webp/' : '';
-  var params = "" + _quality + _format + (getSize(width, height)) + _suffix;
+  var _format = getFormat({ format: format, fallback: fallback });
+  var _size = getSize({ width: width, height: height });
+  var _suffix = typeof suffix === 'string' ? suffix : '';
+  var params = "" + _quality + _format + _size + _suffix;
 
   return _prefix + hashToPath(hash) + (params ? ("?imageMogr/" + params) : '')
 };
@@ -79,6 +98,7 @@ var getImageClass = function (opt) {
   if ( opt === void 0 ) opt = {};
 
   var GlobalOptions = function GlobalOptions() {
+    // Global
     copyKeys({
       source: opt,
       target: this,
@@ -86,21 +106,20 @@ var getImageClass = function (opt) {
         'loading', 'error',
         'quality',
         'prefix', 'suffix',
-        'disableWebp',
       ],
     });
   };
 
   GlobalOptions.prototype.hashToSrc = function hashToSrc (hash) {
     var params = { hash: hash };
-
+    // Get src
     copyKeys({
       source: this,
       target: params,
       keys: [
         'width', 'height', 'quality',
+        'format', 'fallback',
         'prefix', 'suffix',
-        'disableWebp',
       ],
     });
     return getSrc(params)
@@ -113,14 +132,15 @@ var getImageClass = function (opt) {
         : { hash: value };
 
       GlobalOptions.call(this);
+      // Directive
       copyKeys({
         source: params,
         target: this,
         keys: [
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
+          'format', 'fallback',
           'prefix', 'suffix',
-          'disableWebp',
         ],
       });
     }

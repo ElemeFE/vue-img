@@ -48,9 +48,17 @@ describe('检测核心函数 getSrc', () => {
       .to.include('/!100x200r/gravity/Center/crop/100x200/')
   })
 
-  it('{ disableWebp }', () => {
-    config.disableWebp = true
+  it('{ fallback }', () => {
+    VueImg.canWebp = false
+    config.fallback = 'gif'
     expect(VueImg.getSrc(config))
-      .to.not.include('webp')
+      .to.include('format/gif')
+  })
+
+  it('{ format }', () => {
+    VueImg.canWebp = true
+    config.format = 'png'
+    expect(VueImg.getSrc(config))
+      .to.include('format/png')
   })
 })

@@ -1,6 +1,6 @@
 # vue-img
 
-> hash2path wrapper for vue 2
+> hash2path and image lazyload wrapper for vue 2
 
 ## 使用方法
 
@@ -15,7 +15,8 @@ Vue.use(VueImg, {
   loading: '',
   error: '',
   prefix: '',
-  quality: 100
+  quality: 100,
+  globalLazy: true // 如果要使用图片懒加载功能，必须配置此项
 })
 ```
 
@@ -29,17 +30,17 @@ Vue.use(VueImg, {
 <!-- 设置图片 + 默认参数 -->
 <img v-img="'xxx'">
 <!-- 设置图片 + 自定义参数 -->
-<img v-img="{ hash: 'xxx', width: 233, height: 666 }">
+<img v-img="{ hash: 'xxx', width: 233, height: 666, lazy: true }">
 
 <!-- 设置背景 + 默认参数 -->
 <div v-img="'xxx'"></div>
-<!-- 设置背景 + 自定义参数 -->
+<!-- 设置背景 + 自定义参数（div原始不支持lazy选项） -->
 <div v-img="{ hash: 'xxx', width: 12, height: 450 }"></div>
 ```
 
-### 可读属性
+### 可读属性和方法
 
-VueImg 提供了一些属性，可用于指令以外的场合。你应当视它们为**只读**属性，避免直接修改。
+VueImg 提供了一些属性，可用于指令以外的场合。你应当视它们为**只读**属性，避免直接修改，同时VueImg提供了`getSrc({ ... })`方法。
 
 ```JS
 VueImg.cdn             // [String]   当前环境的默认 CDN
@@ -49,20 +50,23 @@ VueImg.getSrc({ ... }) // [Function] 获取图片地址
 
 ### 参数列表
 
-名称 | 描述 | 全局配置 | 指令参数 | getSrc 函数
---- | --- | --- | --- | ---
-hash | [String] 图片哈希（必填）| ✕ | 〇 | 〇
-width | [Number] 宽度 | ✕ | 〇 | 〇
-height | [Number] 高度 | ✕ | 〇 | 〇
-format | [String] 强制图片格式 | ✕ | 〇 | 〇
-fallback | [String] 不支持 webP 时转换格式 | ✕ | 〇 | 〇
-quality | [Number] 图片质量 | 〇 | 〇 | 〇
-prefix | [String] CDN 地址前缀 | 〇 | 〇 | 〇
-suffix | [String] CDN 处理后缀 [?] | 〇 | 〇 | 〇
-loading | [String] 加载中默认图片哈希 | 〇 | 〇 | ✕
-error | [String] 失败替换图片哈希 | 〇 | 〇 | ✕
+| 名称         | 描述                      | 全局配置 | 指令参数 | getSrc 函数 |
+| ---------- | ----------------------- | ---- | ---- | --------- |
+| hash       | [String] 图片哈希（必填）       | ✕    | 〇    | 〇         |
+| width      | [Number] 宽度             | ✕    | 〇    | 〇         |
+| height     | [Number] 高度             | ✕    | 〇    | 〇         |
+| format     | [String] 强制图片格式         | ✕    | 〇    | 〇         |
+| fallback   | [String] 不支持 webP 时转换格式 | ✕    | 〇    | 〇         |
+| quality    | [Number] 图片质量           | 〇    | 〇    | 〇         |
+| prefix     | [String] CDN 地址前缀       | 〇    | 〇    | 〇         |
+| suffix     | [String] CDN 处理后缀 [?]   | 〇    | 〇    | 〇         |
+| loading    | [String] 加载中默认图片哈希      | 〇    | 〇    | ✕         |
+| error      | [String] 失败替换图片哈希       | 〇    | 〇    | ✕         |
+| globalLazy | [Boolean]是否配置图片懒加载功能    | 〇    | ✕    | ✕         |
+| lazy       | [Boolean]图片是否需要懒加载      | ✕    | 〇    | ✕         |
 
 - `suffix` 参数可用于模糊、旋转等特殊处理，具体请参考[《七牛 CDN 开发者文档》](http://developer.qiniu.com/code/v6/api/kodo-api/image/imagemogr2.html)。
+- `lazy`参数以`globalLazy`参数为前置条件，也就是说，要使用图片懒加载功能必须全局配置`globalLazy`参数为`true`。**懒加载功能仅支持`img`原始**。
 
 ## 贡献代码
 

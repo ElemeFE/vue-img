@@ -73,6 +73,46 @@ const setAttr = (el, src, tag) => {
   }
 };
 
+const throttle = (action, delay) => {
+  let timeout = null;
+  let lastRun = 0;
+  return function() {
+    if (timeout) {
+      return
+    }
+    const elapsed = Date.now() - lastRun;
+    const context = this;
+    const args = arguments;
+    const runCallback = function() {
+      lastRun = Date.now();
+      timeout = false;
+      action.apply(context, args);
+    };
+    if (elapsed >= delay) {
+      runCallback();
+    } else {
+      timeout = setTimeout(runCallback, delay);
+    }
+  }
+};
+
+const on = (el, ev, fn) => {
+  el.addEventListener(ev, fn);
+};
+
+const off = (el, ev, fn) => {
+  el.removeEventListener(ev, fn);
+};
+
+const inView = (el) => {
+  const rect = el.getBoundingClientRect();
+
+  return rect.top < window.innerHeight
+  && rect.bottom > 0
+  && rect.left < window.innerWidth
+  && rect.right > 0
+};
+
 var getImageClass = (opt = {}) => {
   class GlobalOptions {
     constructor() {
@@ -140,10 +180,62 @@ var getImageClass = (opt = {}) => {
   return vImg
 };
 
+const LAZY_CLASS = 'v-jo-lazy';
+const EVENTS = ['scroll', 'wheel', 'mousewheel', 'resize', 'touchmove'];
+
+
+var constants = Object.freeze({
+	LAZY_CLASS: LAZY_CLASS,
+	EVENTS: EVENTS
+});
+
+let hasBind = false;
+
+const { EVENTS: EVENTS$1, LAZY_CLASS: LAZY_CLASS$1 } = constants;
+
+const loadImage = (item) => {
+  const img = new Image();
+  img.src = item.dataset.src;
+
+  img.onload = () => {
+    item.src = item.dataset.src;
+    item.classList.remove(LAZY_CLASS$1);
+  };
+};
+
+const handler = throttle(() => {
+
+  const lazys = document.querySelectorAll(`img.${LAZY_CLASS$1}`);
+  const len = lazys.length;
+
+  if (len > 0) {
+    lazys.forEach(lazy => {
+      if (inView(lazy)) {
+        loadImage(lazy);
+      }
+    });
+  }
+
+}, 200);
+
+const events = (el, bool) => {
+  EVENTS$1.forEach(ev => {
+    bool
+    ? on(el, ev, handler)
+    : off(el, ev, handler);
+  });
+};
+
+const lazy = bool => {
+  if (!typeof window || hasBind) return false
+  if (bool && !hasBind) hasBind = true;
+  events(window, bool);
+};
+
 // Vue plugin installer
 const install = (Vue, opt) => {
   const vImg = getImageClass(opt);
-
+  const { globalLazy } = opt;
   const update = (el, binding, vnode) => {
     const vImgIns = new vImg(binding.value);
     const vImgSrc = vImgIns.toImageSrc();
@@ -162,12 +254,32 @@ const install = (Vue, opt) => {
     img.src = vImgSrc;
   };
 
+  globalLazy && lazy(true);
+
   // Register Vue directive
   Vue.directive('img', {
     bind(el, binding, vnode) {
-      const src = new vImg(binding.value).toLoadingSrc();
-      if (src) setAttr(el, src, vnode.tag);
-      update(el, binding, vnode);
+      const vImgIns = new vImg(binding.value);
+      const loadSrc = vImgIns.toLoadingSrc();
+      const dataSrc = vImgIns.toImageSrc();
+      const { lazy: lazy$$1 } = binding.value;
+
+      if (loadSrc) setAttr(el, loadSrc, vnode.tag);
+
+      if (lazy$$1 === true && globalLazy === true) {
+        el.classList.add(LAZY_CLASS);
+        el.setAttribute('data-src', dataSrc);
+      } else {
+        update(el, binding, vnode);       
+      }
+    },
+
+    inserted(el, binding, vnode) {
+      const { lazy: lazy$$1 } = binding.value;
+
+      if (inView(el) && lazy$$1 === true && globalLazy === true) {
+        update(el, binding, vnode);
+      }
     },
 
     update,
@@ -176,5 +288,6 @@ const install = (Vue, opt) => {
 
 VueImg$1.getSrc = getSrc;
 VueImg$1.install = install;
+VueImg$1.lazy = lazy;
 
 export default VueImg$1;

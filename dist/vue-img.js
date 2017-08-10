@@ -94,6 +94,46 @@ var setAttr = function (el, src, tag) {
   }
 };
 
+var throttle = function (action, delay) {
+  var timeout = null;
+  var lastRun = 0;
+  return function() {
+    if (timeout) {
+      return
+    }
+    var elapsed = Date.now() - lastRun;
+    var context = this;
+    var args = arguments;
+    var runCallback = function() {
+      lastRun = Date.now();
+      timeout = false;
+      action.apply(context, args);
+    };
+    if (elapsed >= delay) {
+      runCallback();
+    } else {
+      timeout = setTimeout(runCallback, delay);
+    }
+  }
+};
+
+var on = function (el, ev, fn) {
+  el.addEventListener(ev, fn);
+};
+
+var off = function (el, ev, fn) {
+  el.removeEventListener(ev, fn);
+};
+
+var inView = function (el) {
+  var rect = el.getBoundingClientRect();
+
+  return rect.top < window.innerHeight
+  && rect.bottom > 0
+  && rect.left < window.innerWidth
+  && rect.right > 0
+};
+
 var getImageClass = function (opt) {
   if ( opt === void 0 ) opt = {};
 
@@ -105,8 +145,7 @@ var getImageClass = function (opt) {
       keys: [
         'loading', 'error',
         'quality',
-        'prefix', 'suffix',
-      ],
+        'prefix', 'suffix' ],
     });
   };
 
@@ -119,8 +158,7 @@ var getImageClass = function (opt) {
       keys: [
         'width', 'height', 'quality',
         'format', 'fallback',
-        'prefix', 'suffix',
-      ],
+        'prefix', 'suffix' ],
     });
     return getSrc(params)
   };
@@ -140,8 +178,7 @@ var getImageClass = function (opt) {
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
           'format', 'fallback',
-          'prefix', 'suffix',
-        ],
+          'prefix', 'suffix' ],
       });
     }
 
@@ -167,10 +204,57 @@ var getImageClass = function (opt) {
   return vImg
 };
 
+var LAZY_CLASS = 'v-jo-lazy';
+var EVENTS = ['scroll', 'wheel', 'mousewheel', 'resize', 'touchmove'];
+
+var hasBind = false;
+
+var EVENTS$1 = EVENTS;
+var LAZY_CLASS$1 = LAZY_CLASS;
+
+var loadImage = function (item) {
+  var img = new Image();
+  img.src = item.dataset.src;
+
+  img.onload = function () {
+    item.src = item.dataset.src;
+    item.classList.remove(LAZY_CLASS$1);
+  };
+};
+
+var handler = throttle(function () {
+
+  var lazys = document.querySelectorAll(("img." + LAZY_CLASS$1));
+  var len = lazys.length;
+
+  if (len > 0) {
+    lazys.forEach(function (lazy) {
+      if (inView(lazy)) {
+        loadImage(lazy);
+      }
+    });
+  }
+
+}, 200);
+
+var events = function (el, bool) {
+  EVENTS$1.forEach(function (ev) {
+    bool
+    ? on(el, ev, handler)
+    : off(el, ev, handler);
+  });
+};
+
+var lazy = function (bool) {
+  if (!typeof window || hasBind) { return false }
+  if (bool && !hasBind) { hasBind = true; }
+  events(window, bool);
+};
+
 // Vue plugin installer
 var install = function (Vue, opt) {
   var vImg = getImageClass(opt);
-
+  var globalLazy = opt.globalLazy;
   var update = function (el, binding, vnode) {
     var vImgIns = new vImg(binding.value);
     var vImgSrc = vImgIns.toImageSrc();
@@ -189,12 +273,34 @@ var install = function (Vue, opt) {
     img.src = vImgSrc;
   };
 
+  globalLazy && lazy(true);
+
   // Register Vue directive
   Vue.directive('img', {
     bind: function bind(el, binding, vnode) {
-      var src = new vImg(binding.value).toLoadingSrc();
-      if (src) { setAttr(el, src, vnode.tag); }
-      update(el, binding, vnode);
+      var vImgIns = new vImg(binding.value);
+      var loadSrc = vImgIns.toLoadingSrc();
+      var dataSrc = vImgIns.toImageSrc();
+      var ref = binding.value;
+      var lazy$$1 = ref.lazy;
+
+      if (loadSrc) { setAttr(el, loadSrc, vnode.tag); }
+
+      if (lazy$$1 === true && globalLazy === true) {
+        el.classList.add(LAZY_CLASS);
+        el.setAttribute('data-src', dataSrc);
+      } else {
+        update(el, binding, vnode);       
+      }
+    },
+
+    inserted: function inserted(el, binding, vnode) {
+      var ref = binding.value;
+      var lazy$$1 = ref.lazy;
+
+      if (inView(el) && lazy$$1 === true && globalLazy === true) {
+        update(el, binding, vnode);
+      }
     },
 
     update: update,
@@ -203,6 +309,7 @@ var install = function (Vue, opt) {
 
 VueImg$1.getSrc = getSrc;
 VueImg$1.install = install;
+VueImg$1.lazy = lazy;
 
 return VueImg$1;
 

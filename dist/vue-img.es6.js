@@ -233,7 +233,7 @@ const lazy = bool => {
 };
 
 // Vue plugin installer
-const install = (Vue, opt) => {
+const install = (Vue, opt = {}) => {
   const vImg = getImageClass(opt);
   const { globalLazy } = opt;
   const update = (el, binding, vnode) => {
@@ -288,6 +288,5 @@ const install = (Vue, opt) => {
 
 VueImg$1.getSrc = getSrc;
 VueImg$1.install = install;
-VueImg$1.lazy = lazy;
 
 export default VueImg$1;

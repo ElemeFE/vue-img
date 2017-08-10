@@ -4,7 +4,7 @@ import { LAZY_CLASS } from './constants'
 import initLazy from './lazy'
 
 // Vue plugin installer
-const install = (Vue, opt) => {
+const install = (Vue, opt = {}) => {
   const vImg = getImageClass(opt)
   const { globalLazy } = opt
   const update = (el, binding, vnode) => {

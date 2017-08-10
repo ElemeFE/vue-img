@@ -253,6 +253,8 @@ var lazy = function (bool) {
 
 // Vue plugin installer
 var install = function (Vue, opt) {
+  if ( opt === void 0 ) opt = {};
+
   var vImg = getImageClass(opt);
   var globalLazy = opt.globalLazy;
   var update = function (el, binding, vnode) {
@@ -309,7 +311,6 @@ var install = function (Vue, opt) {
 
 VueImg$1.getSrc = getSrc;
 VueImg$1.install = install;
-VueImg$1.lazy = lazy;
 
 return VueImg$1;
 

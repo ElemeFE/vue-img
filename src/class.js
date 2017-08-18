@@ -10,8 +10,8 @@ export default (opt = {}) => {
         target: this,
         keys: [
           'loading', 'error',
-          'quality',
-          'prefix', 'suffix',
+          'quality', 'delay',
+          'prefix', 'suffix', 'adapt',
         ],
       })
     }
@@ -24,7 +24,7 @@ export default (opt = {}) => {
         target: params,
         keys: [
           'width', 'height', 'quality',
-          'format', 'fallback',
+          'format', 'fallback', 'adapt',
           'prefix', 'suffix',
         ],
       })
@@ -46,8 +46,8 @@ export default (opt = {}) => {
         keys: [
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
-          'format', 'fallback',
-          'prefix', 'suffix',
+          'format', 'fallback', 'adapt',
+          'prefix', 'suffix', 'lazy',
         ],
       })
     }

@@ -11,50 +11,6 @@ const protocol = location.protocol === 'https:' ? 'https://' : 'http://';
 const env = document.domain.match(/.(alpha|beta).ele(net)?.me$/);
 VueImg$1.cdn = protocol + (env ? `fuss${env[0]}` : 'fuss10.elemecdn.com');
 
-// Translate hash to path
-const hashToPath = hash => hash.replace(/^(\w)(\w\w)(\w{29}(\w*))$/, '/$1/$2/$3.$4');
-
-// Get image format
-const getFormat = ({ format, fallback }) => {
-  const isFormat = /^(jpg|jpeg|png|gif)$/;
-
-  if (isFormat.test(format)) return `format/${format}/`
-  if (VueImg$1.canWebp) return 'format/webp/'
-  return isFormat.test(fallback)
-    ? `format/${fallback}/`
-    : ''
-};
-
-// Get image size
-const getSize = ({ width, height }) => {
-  const thumb = 'thumbnail/';
-  const cover = `${width}x${height}`;
-
-  if (width && height) return `${thumb}!${cover}r/gravity/Center/crop/${cover}/`
-  if (width) return `${thumb}${width}x/`
-  if (height) return `${thumb}x${height}/`
-  return ''
-};
-
-// Get image size
-const getSrc = ({
-  hash,
-  width, height, quality,
-  format, fallback,
-  prefix, suffix,
-} = {}) => {
-  if (!hash || typeof hash !== 'string') return ''
-
-  const _prefix = typeof prefix === 'string' ? prefix : VueImg$1.cdn;
-  const _quality = typeof quality === 'number' ? `quality/${quality}/` : '';
-  const _format = getFormat({ format, fallback });
-  const _size = getSize({ width, height });
-  const _suffix = typeof suffix === 'string' ? suffix : '';
-  const params = `${_quality}${_format}${_size}${_suffix}`;
-
-  return _prefix + hashToPath(hash) + (params ? `?imageMogr/${params}` : '')
-};
-
 const hasProp = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
 
 const copyKeys = ({ source, target, keys }) => {
@@ -73,6 +29,81 @@ const setAttr = (el, src, tag) => {
   }
 };
 
+const resize = (size) => {
+  const html = document.documentElement;
+  const hasDPR = html.hasAttribute('data-dpr');
+  let viewWidth;
+  try {
+    viewWidth = +(html.getAttribute('style').match(/(\d+)/) || [])[1];
+  } catch(e) {
+    console.error('adapt参数需要配合lib-flexible库使用：https://github.com/amfe/lib-flexible');
+  }
+
+  if (hasDPR && !Number.isNaN(viewWidth) && typeof viewWidth === 'number') {
+    return (size * viewWidth) / 75 // 75 is the 1/10 iphone6 deivce width pixel
+  } else {
+    return size
+  }
+};
+
+const inViewport = (el) => {
+  const rect = el.getBoundingClientRect();
+
+  return rect.top > 0
+    && rect.bottom < window.innerHeight
+    && rect.left > 0
+    && rect.right < window.innerWidth
+};
+
+// Translate hash to path
+const hashToPath = hash => hash.replace(/^(\w)(\w\w)(\w{29}(\w*))$/, '/$1/$2/$3.$4');
+
+// Get image format
+const getFormat = ({ format, fallback }) => {
+  const isFormat = /^(jpg|jpeg|png|gif)$/;
+
+  if (isFormat.test(format)) return `format/${format}/`
+  if (VueImg$1.canWebp) return 'format/webp/'
+  return isFormat.test(fallback)
+    ? `format/${fallback}/`
+    : ''
+};
+
+// Get image size
+const getSize = ({ width, height, adapt }) => {
+
+  const w = width && (adapt ? resize(width) : width);
+  const h = height && (adapt ? resize(height) : height);
+
+  const thumb = 'thumbnail/';
+  const cover = `${w}x${h}`;
+
+  if (width && height) return `${thumb}!${cover}r/gravity/Center/crop/${cover}/`
+  if (width) return `${thumb}${w}x/`
+  if (height) return `${thumb}x${h}/`
+
+  return ''
+};
+
+// Get image size
+const getSrc = ({
+  hash, adapt,
+  width, height, quality,
+  format, fallback,
+  prefix, suffix,
+} = {}) => {
+  if (!hash || typeof hash !== 'string') return ''
+
+  const _prefix = typeof prefix === 'string' ? prefix : VueImg$1.cdn;
+  const _quality = typeof quality === 'number' ? `quality/${quality}/` : '';
+  const _format = getFormat({ format, fallback });
+  const _size = getSize({ width, height, adapt });
+  const _suffix = typeof suffix === 'string' ? suffix : '';
+  const params = `${_quality}${_format}${_size}${_suffix}`;
+
+  return _prefix + hashToPath(hash) + (params ? `?imageMogr/${params}` : '')
+};
+
 var getImageClass = (opt = {}) => {
   class GlobalOptions {
     constructor() {
@@ -82,8 +113,8 @@ var getImageClass = (opt = {}) => {
         target: this,
         keys: [
           'loading', 'error',
-          'quality',
-          'prefix', 'suffix',
+          'quality', 'delay',
+          'prefix', 'suffix', 'adapt',
         ],
       });
     }
@@ -96,7 +127,7 @@ var getImageClass = (opt = {}) => {
         target: params,
         keys: [
           'width', 'height', 'quality',
-          'format', 'fallback',
+          'format', 'fallback', 'adapt',
           'prefix', 'suffix',
         ],
       });
@@ -118,8 +149,8 @@ var getImageClass = (opt = {}) => {
         keys: [
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
-          'format', 'fallback',
-          'prefix', 'suffix',
+          'format', 'fallback', 'adapt',
+          'prefix', 'suffix', 'lazy',
         ],
       });
     }
@@ -143,33 +174,67 @@ var getImageClass = (opt = {}) => {
 // Vue plugin installer
 const install = (Vue, opt) => {
   const vImg = getImageClass(opt);
+  const promises = [];
 
   const update = (el, binding, vnode) => {
     const vImgIns = new vImg(binding.value);
     const vImgSrc = vImgIns.toImageSrc();
     const vImgErr = vImgIns.toErrorSrc();
+
     if (!vImgSrc) return
 
     const img = new Image();
-    img.onload = () => {
-      setAttr(el, vImgSrc, vnode.tag);
-    };
-    if (vImgErr) {
-      img.onerror = () => {
-        setAttr(el, vImgErr, vnode.tag);
+    const delay = +vImgIns.delay || 5000;
+
+    return new Promise(resolve => {
+      img.onload = () => {
+        setAttr(el, vImgSrc, vnode.tag);
+        resolve();
       };
-    }
-    img.src = vImgSrc;
+      if (vImgErr) {
+        img.onerror = () => {
+          setAttr(el, vImgErr, vnode.tag);
+          resolve();
+        };
+      }
+      setTimeout(() => {
+        resolve();
+      }, delay);
+      img.src = vImgSrc;
+    })
   };
 
   // Register Vue directive
   Vue.directive('img', {
     bind(el, binding, vnode) {
-      const src = new vImg(binding.value).toLoadingSrc();
-      if (src) setAttr(el, src, vnode.tag);
-      update(el, binding, vnode);
-    },
+      const loadSrc = new vImg(binding.value).toLoadingSrc();
+      const { lazy } = binding.value;
 
+      if (loadSrc) setAttr(el, loadSrc, vnode.tag);
+      if (!lazy) {
+        promises.push(update(el, binding, vnode));
+      }
+    },
+    inserted(el, binding, vnode) {
+      const { lazy } = binding.value;
+      if (!lazy) return
+      if (inViewport(el)) {
+
+        promises.push(update(el, binding, vnode));
+
+      } else {
+
+        Vue.nextTick(() => {
+          Promise.all(promises)
+          .then(() => {
+            promises.length = 0;
+            update(el, binding, vnode);
+          })
+          .catch(() => {});
+        });
+
+      }
+    },
     update,
   });
 };

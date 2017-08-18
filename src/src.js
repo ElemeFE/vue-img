@@ -1,4 +1,5 @@
 import VueImg from './base'
+import { resize } from './utils'
 
 // Translate hash to path
 const hashToPath = hash => hash.replace(/^(\w)(\w\w)(\w{29}(\w*))$/, '/$1/$2/$3.$4')
@@ -15,19 +16,24 @@ const getFormat = ({ format, fallback }) => {
 }
 
 // Get image size
-const getSize = ({ width, height }) => {
+const getSize = ({ width, height, adapt }) => {
+
+  const w = width && (adapt ? resize(width) : width)
+  const h = height && (adapt ? resize(height) : height)
+
   const thumb = 'thumbnail/'
-  const cover = `${width}x${height}`
+  const cover = `${w}x${h}`
 
   if (width && height) return `${thumb}!${cover}r/gravity/Center/crop/${cover}/`
-  if (width) return `${thumb}${width}x/`
-  if (height) return `${thumb}x${height}/`
+  if (width) return `${thumb}${w}x/`
+  if (height) return `${thumb}x${h}/`
+
   return ''
 }
 
 // Get image size
 const getSrc = ({
-  hash,
+  hash, adapt,
   width, height, quality,
   format, fallback,
   prefix, suffix,
@@ -37,7 +43,7 @@ const getSrc = ({
   const _prefix = typeof prefix === 'string' ? prefix : VueImg.cdn
   const _quality = typeof quality === 'number' ? `quality/${quality}/` : ''
   const _format = getFormat({ format, fallback })
-  const _size = getSize({ width, height })
+  const _size = getSize({ width, height, adapt })
   const _suffix = typeof suffix === 'string' ? suffix : ''
   const params = `${_quality}${_format}${_size}${_suffix}`
 

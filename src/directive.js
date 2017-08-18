@@ -11,7 +11,7 @@ const install = (Vue, opt) => {
     const vImgSrc = vImgIns.toImageSrc()
     const vImgErr = vImgIns.toErrorSrc()
 
-    if (!vImgSrc) return
+    if (!vImgSrc) return Promise.resolve()
 
     const img = new Image()
     const delay = +vImgIns.delay || 5000
@@ -38,16 +38,16 @@ const install = (Vue, opt) => {
   Vue.directive('img', {
     bind(el, binding, vnode) {
       const loadSrc = new vImg(binding.value).toLoadingSrc()
-      const { lazy } = binding.value
+      const { defer } = binding.value
 
       if (loadSrc) setAttr(el, loadSrc, vnode.tag)
-      if (!lazy) {
+      if (!defer) {
         promises.push(update(el, binding, vnode))
       }
     },
     inserted(el, binding, vnode) {
-      const { lazy } = binding.value
-      if (!lazy) return
+      const { defer } = binding.value
+      if (!defer) return
       if (inViewport(el)) {
 
         promises.push(update(el, binding, vnode))

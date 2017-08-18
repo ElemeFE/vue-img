@@ -18,6 +18,7 @@ var env = document.domain.match(/.(alpha|beta).ele(net)?.me$/);
 VueImg$1.cdn = protocol + (env ? ("fuss" + (env[0])) : 'fuss10.elemecdn.com');
 
 var hasProp = function (obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); };
+var html = document.documentElement;
 
 var copyKeys = function (ref) {
   var source = ref.source;
@@ -40,16 +41,20 @@ var setAttr = function (el, src, tag) {
 };
 
 var resize = function (size) {
-  var html = document.documentElement;
-  var hasDPR = html.hasAttribute('data-dpr');
   var viewWidth;
   try {
     viewWidth = +(html.getAttribute('style').match(/(\d+)/) || [])[1];
   } catch(e) {
-    console.error('adapt参数需要配合lib-flexible库使用：https://github.com/amfe/lib-flexible');
+    var dpr = window.devicePixelRatio;
+    var w = html.offsetWidth;
+    if (w / dpr > 540) {
+      viewWidth = 540 * dpr / 10;
+    } else {
+      viewWidth = w / 10;
+    }
   }
 
-  if (hasDPR && !Number.isNaN(viewWidth) && typeof viewWidth === 'number') {
+  if (Number(viewWidth) >= 0 && typeof viewWidth === 'number') {
     return (size * viewWidth) / 75 // 75 is the 1/10 iphone6 deivce width pixel
   } else {
     return size
@@ -171,7 +176,7 @@ var getImageClass = function (opt) {
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
           'format', 'fallback', 'adapt',
-          'prefix', 'suffix', 'lazy' ],
+          'prefix', 'suffix', 'defer' ],
       });
     }
 
@@ -207,7 +212,7 @@ var install = function (Vue, opt) {
     var vImgSrc = vImgIns.toImageSrc();
     var vImgErr = vImgIns.toErrorSrc();
 
-    if (!vImgSrc) { return }
+    if (!vImgSrc) { return Promise.resolve() }
 
     var img = new Image();
     var delay = +vImgIns.delay || 5000;
@@ -235,17 +240,17 @@ var install = function (Vue, opt) {
     bind: function bind(el, binding, vnode) {
       var loadSrc = new vImg(binding.value).toLoadingSrc();
       var ref = binding.value;
-      var lazy = ref.lazy;
+      var defer = ref.defer;
 
       if (loadSrc) { setAttr(el, loadSrc, vnode.tag); }
-      if (!lazy) {
+      if (!defer) {
         promises.push(update(el, binding, vnode));
       }
     },
     inserted: function inserted(el, binding, vnode) {
       var ref = binding.value;
-      var lazy = ref.lazy;
-      if (!lazy) { return }
+      var defer = ref.defer;
+      if (!defer) { return }
       if (inViewport(el)) {
 
         promises.push(update(el, binding, vnode));

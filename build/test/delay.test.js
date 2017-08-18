@@ -3,9 +3,9 @@ describe('延迟加载', function() {
 
   const hash = '50f940dbce46148638e03d0778a4c5f8jpeg'
   const loading = '7b73ae0bcb1e68afacbaff7d4b25780bjpeg'
-  const error = '4f88f93f3797600783990d32e5673ab7jpeg'
+
   const config1 = {hash: ''}
-  const config2 = {hash, lazy: true}
+  const config2 = {hash, defer: true}
 
   const getImgs = (n) => {
     let str = ''
@@ -27,13 +27,13 @@ describe('延迟加载', function() {
       loading,
       delay
     })
-    const vm = new Vue({ el: `#${id}`, data: {config1, config2} })
+    new Vue({ el: `#${id}`, data: {config1, config2} })
   }
 
 
   describe('{ 延迟加载图片在（非延迟加载图片没有加载完 && 5000ms内）不进行加载 }', () => {
 
-    const id = 'vm-' + (+new Date).toString(32)
+    const id = `vm-${(+new Date).toString(32)}`
 
     before(done => {
       setViewModel(id, 5000, 100)
@@ -51,7 +51,7 @@ describe('延迟加载', function() {
 
   describe('{ 延迟加载图片在（非延迟加载图片没有加载完 && 等待100ms后）进行加载 }', () => {
 
-    const id = 'vm-' + (+new Date).toString(32)
+    const id = `vm-${(+new Date).toString(32)}`
 
     before(done => {
       setViewModel(id, 100, 100)
@@ -69,7 +69,7 @@ describe('延迟加载', function() {
 
   describe('{ 延迟加载图片在（非延迟加载图片加载完后 && 5000ms内）进行加载 }', () => {
 
-    const id = 'vm-' + (+new Date).toString(32)
+    const id = `vm-${(+new Date).toString(32)}`
 
     before(done => {
       setViewModel(id, 5000, 1)

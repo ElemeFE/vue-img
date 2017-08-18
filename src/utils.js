@@ -1,6 +1,5 @@
 const hasProp = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop)
 const html = document.documentElement
-const hasDPR = html.hasAttribute('data-dpr')
 
 export const copyKeys = ({ source, target, keys }) => {
   keys.forEach(key => {
@@ -23,10 +22,16 @@ export const resize = (size) => {
   try {
     viewWidth = +(html.getAttribute('style').match(/(\d+)/) || [])[1]
   } catch(e) {
-    console.error('adapt参数需要配合lib-flexible库使用：https://github.com/amfe/lib-flexible')
+    const dpr = window.devicePixelRatio
+    const w = html.offsetWidth
+    if (w / dpr > 540) {
+      viewWidth = 540 * dpr / 10
+    } else {
+      viewWidth = w / 10
+    }
   }
 
-  if (hasDPR && !Number.isNaN(viewWidth) && typeof viewWidth === 'number') {
+  if (Number(viewWidth) >= 0 && typeof viewWidth === 'number') {
     return (size * viewWidth) / 75 // 75 is the 1/10 iphone6 deivce width pixel
   } else {
     return size

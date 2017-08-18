@@ -47,7 +47,7 @@ export default (opt = {}) => {
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
           'format', 'fallback', 'adapt',
-          'prefix', 'suffix', 'lazy',
+          'prefix', 'suffix', 'defer',
         ],
       })
     }

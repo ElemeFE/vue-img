@@ -5,6 +5,7 @@ describe('全局配置', function() {
   const loading = '7b73ae0bcb1e68afacbaff7d4b25780bjpeg'
   const error = '4f88f93f3797600783990d32e5673ab7jpeg'
   const createViewModel = ({ option, config }) => {
+
     const el = document.createElement('div')
     const id = `vm-${Date.now().toString(16)}`
     el.id = id;
@@ -157,4 +158,61 @@ describe('全局配置', function() {
         }))
     })
   })
+
+  describe('全局 { adapt }', () => {
+    let vm
+
+    before(done => {
+      vm = createViewModel({
+        option: { adapt: true },
+        config: { hash, width: 750, height: 750 }
+      })
+      setTimeout(done, 2000)
+    })
+
+    it('测试通过', () => {
+      const img = vm.$el.querySelector('img')
+      const { getComputedStyle } = window
+      expect(img.src)
+        .to.equal(VueImg.getSrc({
+          hash,
+          adapt: true,
+          width: 750,
+          height: 750
+        }))
+
+      expect(getComputedStyle(img).width).to.equal('640px')
+      expect(getComputedStyle(img).height).to.equal('640px')
+
+    })
+  })
+
+  describe('全局 + 局部 { adapt }', () => {
+    let vm
+
+    before(done => {
+      vm = createViewModel({
+        option: { adapt: true },
+        config: { hash, width: 750, height: 750, adapt: false }
+      })
+      setTimeout(done, 2000)
+    })
+
+    it('测试通过', () => {
+      const img = vm.$el.querySelector('img')
+      const { getComputedStyle } = window
+      expect(img.src)
+        .to.equal(VueImg.getSrc({
+          hash,
+          adapt: false,
+          width: 750,
+          height: 750
+        }))
+
+      expect(getComputedStyle(img).width).to.equal('750px')
+      expect(getComputedStyle(img).height).to.equal('750px')
+
+    })
+  })
+
 })

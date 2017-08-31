@@ -32,10 +32,13 @@ const setAttr = (el, src, tag) => {
 
 const resize = (size) => {
   let viewWidth;
+  const dpr = window.devicePixelRatio;
+  const dataDpr = document.documentElement.getAttribute('data-dpr');
+  const ratio = dataDpr ? (dpr / dataDpr) : dpr;
+
   try {
     viewWidth = +(html.getAttribute('style').match(/(\d+)/) || [])[1];
   } catch(e) {
-    const dpr = window.devicePixelRatio;
     const w = html.offsetWidth;
     if (w / dpr > 540) {
       viewWidth = 540 * dpr / 10;
@@ -43,6 +46,8 @@ const resize = (size) => {
       viewWidth = w / 10;
     }
   }
+
+  viewWidth = viewWidth * ratio;
 
   if (Number(viewWidth) >= 0 && typeof viewWidth === 'number') {
     return (size * viewWidth) / 75 // 75 is the 1/10 iphone6 deivce width pixel

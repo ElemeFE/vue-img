@@ -17,62 +17,8 @@ var protocol = location.protocol === 'https:' ? 'https://' : 'http://';
 var env = document.domain.match(/.(alpha|beta).ele(net)?.me$/);
 VueImg$1.cdn = protocol + (env ? ("fuss" + (env[0])) : 'fuss10.elemecdn.com');
 
-// Translate hash to path
-var hashToPath = function (hash) { return hash.replace(/^(\w)(\w\w)(\w{29}(\w*))$/, '/$1/$2/$3.$4'); };
-
-// Get image format
-var getFormat = function (ref) {
-  var format = ref.format;
-  var fallback = ref.fallback;
-
-  var isFormat = /^(jpg|jpeg|png|gif)$/;
-
-  if (isFormat.test(format)) { return ("format/" + format + "/") }
-  if (VueImg$1.canWebp) { return 'format/webp/' }
-  return isFormat.test(fallback)
-    ? ("format/" + fallback + "/")
-    : ''
-};
-
-// Get image size
-var getSize = function (ref) {
-  var width = ref.width;
-  var height = ref.height;
-
-  var thumb = 'thumbnail/';
-  var cover = width + "x" + height;
-
-  if (width && height) { return (thumb + "!" + cover + "r/gravity/Center/crop/" + cover + "/") }
-  if (width) { return ("" + thumb + width + "x/") }
-  if (height) { return (thumb + "x" + height + "/") }
-  return ''
-};
-
-// Get image size
-var getSrc = function (ref) {
-  if ( ref === void 0 ) ref = {};
-  var hash = ref.hash;
-  var width = ref.width;
-  var height = ref.height;
-  var quality = ref.quality;
-  var format = ref.format;
-  var fallback = ref.fallback;
-  var prefix = ref.prefix;
-  var suffix = ref.suffix;
-
-  if (!hash || typeof hash !== 'string') { return '' }
-
-  var _prefix = typeof prefix === 'string' ? prefix : VueImg$1.cdn;
-  var _quality = typeof quality === 'number' ? ("quality/" + quality + "/") : '';
-  var _format = getFormat({ format: format, fallback: fallback });
-  var _size = getSize({ width: width, height: height });
-  var _suffix = typeof suffix === 'string' ? suffix : '';
-  var params = "" + _quality + _format + _size + _suffix;
-
-  return _prefix + hashToPath(hash) + (params ? ("?imageMogr/" + params) : '')
-};
-
 var hasProp = function (obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); };
+var html = document.documentElement;
 
 var copyKeys = function (ref) {
   var source = ref.source;
@@ -125,13 +71,103 @@ var off = function (el, ev, fn) {
   el.removeEventListener(ev, fn);
 };
 
-var inView = function (el) {
+var inView = function (el, offset) {
+  if ( offset === void 0 ) offset = 0;
+
   var rect = el.getBoundingClientRect();
 
-  return rect.top < window.innerHeight
-  && rect.bottom > 0
-  && rect.left < window.innerWidth
-  && rect.right > 0
+  return rect.top >= 0
+  && rect.bottom <= window.innerHeight + offset
+  && rect.left >= 0
+  && rect.right <= window.innerWidth
+};
+
+var resize = function (size) {
+  var viewWidth;
+  var dpr = window.devicePixelRatio;
+  var dataDpr = document.documentElement.getAttribute('data-dpr');
+  var ratio = dataDpr ? (dpr / dataDpr) : dpr;
+
+  try {
+    viewWidth = +(html.getAttribute('style').match(/(\d+)/) || [])[1];
+  } catch(e) {
+    var w = html.offsetWidth;
+    if (w / dpr > 540) {
+      viewWidth = 540 * dpr / 10;
+    } else {
+      viewWidth = w / 10;
+    }
+  }
+
+  viewWidth = viewWidth * ratio;
+
+  if (Number(viewWidth) >= 0 && typeof viewWidth === 'number') {
+    return (size * viewWidth) / 75 // 75 is the 1/10 iphone6 deivce width pixel
+  } else {
+    return size
+  }
+};
+
+// Translate hash to path
+var hashToPath = function (hash) { return hash.replace(/^(\w)(\w\w)(\w{29}(\w*))$/, '/$1/$2/$3.$4'); };
+
+// Get image format
+var getFormat = function (ref) {
+  var format = ref.format;
+  var fallback = ref.fallback;
+
+  var isFormat = /^(jpg|jpeg|png|gif)$/;
+
+  if (isFormat.test(format)) { return ("format/" + format + "/") }
+  if (VueImg$1.canWebp) { return 'format/webp/' }
+  return isFormat.test(fallback)
+    ? ("format/" + fallback + "/")
+    : ''
+};
+
+// Get image size
+var getSize = function (ref) {
+  var width = ref.width;
+  var height = ref.height;
+  var adapt = ref.adapt;
+
+
+  var w = width && (adapt ? resize(width) : width);
+  var h = height && (adapt ? resize(height) : height);
+
+  var thumb = 'thumbnail/';
+  var cover = w + "x" + h;
+
+  if (width && height) { return (thumb + "!" + cover + "r/gravity/Center/crop/" + cover + "/") }
+  if (width) { return ("" + thumb + w + "x/") }
+  if (height) { return (thumb + "x" + h + "/") }
+
+  return ''
+};
+
+// Get image size
+var getSrc = function (ref) {
+  if ( ref === void 0 ) ref = {};
+  var hash = ref.hash;
+  var adapt = ref.adapt;
+  var width = ref.width;
+  var height = ref.height;
+  var quality = ref.quality;
+  var format = ref.format;
+  var fallback = ref.fallback;
+  var prefix = ref.prefix;
+  var suffix = ref.suffix;
+
+  if (!hash || typeof hash !== 'string') { return '' }
+
+  var _prefix = typeof prefix === 'string' ? prefix : VueImg$1.cdn;
+  var _quality = typeof quality === 'number' ? ("quality/" + quality + "/") : '';
+  var _format = getFormat({ format: format, fallback: fallback });
+  var _size = getSize({ width: width, height: height, adapt: adapt });
+  var _suffix = typeof suffix === 'string' ? suffix : '';
+  var params = "" + _quality + _format + _size + _suffix;
+
+  return _prefix + hashToPath(hash) + (params ? ("?imageMogr/" + params) : '')
 };
 
 var getImageClass = function (opt) {
@@ -144,8 +180,8 @@ var getImageClass = function (opt) {
       target: this,
       keys: [
         'loading', 'error',
-        'quality',
-        'prefix', 'suffix' ],
+        'quality', 'delay', 'viewOffset',
+        'prefix', 'suffix', 'adapt', 'enableLazy' ],
     });
   };
 
@@ -157,7 +193,7 @@ var getImageClass = function (opt) {
       target: params,
       keys: [
         'width', 'height', 'quality',
-        'format', 'fallback',
+        'format', 'fallback', 'adapt',
         'prefix', 'suffix' ],
     });
     return getSrc(params)
@@ -177,8 +213,8 @@ var getImageClass = function (opt) {
         keys: [
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
-          'format', 'fallback',
-          'prefix', 'suffix' ],
+          'format', 'fallback', 'adapt',
+          'prefix', 'suffix', 'defer', 'lazy' ],
       });
     }
 
@@ -208,6 +244,7 @@ var LAZY_CLASS = 'v-jo-lazy';
 var EVENTS = ['scroll', 'wheel', 'mousewheel', 'resize', 'touchmove'];
 
 var hasBind = false;
+var viewOffset = 0;
 
 var EVENTS$1 = EVENTS;
 var LAZY_CLASS$1 = LAZY_CLASS;
@@ -229,7 +266,7 @@ var handler = throttle(function () {
 
   if (len > 0) {
     lazys.forEach(function (lazy) {
-      if (inView(lazy)) {
+      if (inView(lazy, viewOffset)) {
         loadImage(lazy);
       }
     });
@@ -245,9 +282,10 @@ var events = function (el, bool) {
   });
 };
 
-var lazy = function (bool) {
+var lazy = function (bool, offset) {
   if (!typeof window || hasBind) { return false }
   if (bool && !hasBind) { hasBind = true; }
+  if (typeof offset === 'number') { viewOffset = offset; }
   events(window, bool);
 };
 
@@ -256,26 +294,39 @@ var install = function (Vue, opt) {
   if ( opt === void 0 ) opt = {};
 
   var vImg = getImageClass(opt);
-  var globalLazy = opt.globalLazy;
+  var enableLazy = opt.enableLazy;
+  var offset = opt.viewOffset;
+  var promises = [];
+
   var update = function (el, binding, vnode) {
     var vImgIns = new vImg(binding.value);
     var vImgSrc = vImgIns.toImageSrc();
     var vImgErr = vImgIns.toErrorSrc();
-    if (!vImgSrc) { return }
+
+    if (!vImgSrc) { return Promise.resolve() }
 
     var img = new Image();
-    img.onload = function () {
-      setAttr(el, vImgSrc, vnode.tag);
-    };
-    if (vImgErr) {
-      img.onerror = function () {
-        setAttr(el, vImgErr, vnode.tag);
+    var delay = +vImgIns.delay || 5000;
+
+    return new Promise(function (resolve) {
+      img.onload = function () {
+        setAttr(el, vImgSrc, vnode.tag);
+        resolve();
       };
-    }
-    img.src = vImgSrc;
+      if (vImgErr) {
+        img.onerror = function () {
+          setAttr(el, vImgErr, vnode.tag);
+          resolve();
+        };
+      }
+      setTimeout(function () {
+        resolve();
+      }, delay);
+      img.src = vImgSrc;
+    })
   };
 
-  globalLazy && lazy(true);
+  enableLazy && lazy(true, offset);
 
   // Register Vue directive
   Vue.directive('img', {
@@ -285,26 +336,47 @@ var install = function (Vue, opt) {
       var dataSrc = vImgIns.toImageSrc();
       var ref = binding.value;
       var lazy$$1 = ref.lazy;
+      var defer = ref.defer;
 
       if (loadSrc) { setAttr(el, loadSrc, vnode.tag); }
-
-      if (lazy$$1 === true && globalLazy === true) {
-        el.classList.add(LAZY_CLASS);
-        el.setAttribute('data-src', dataSrc);
+      if (enableLazy) {
+        if (lazy$$1 === true) {
+          el.classList.add(LAZY_CLASS);
+          el.setAttribute('data-src', dataSrc);
+        } else {
+          update(el, binding, vnode);
+        }
       } else {
-        update(el, binding, vnode);       
+        if (!defer) {
+          promises.push(update(el, binding, vnode));
+        }
       }
     },
 
     inserted: function inserted(el, binding, vnode) {
       var ref = binding.value;
       var lazy$$1 = ref.lazy;
-
-      if (inView(el) && lazy$$1 === true && globalLazy === true) {
-        update(el, binding, vnode);
+      var defer = ref.defer;
+      if (enableLazy) {
+        if (inView(el) && lazy$$1 === true) {
+          update(el, binding, vnode);
+        }
+      } else {
+        if (!defer) { return }
+        if (inView(el)) {
+          promises.push(update(el, binding, vnode));
+        } else {
+          Vue.nextTick(function () {
+            Promise.all(promises)
+            .then(function () {
+              promises.length = 0;
+              update(el, binding, vnode);
+            })
+            .catch(function () {});
+          });
+        }
       }
     },
-
     update: update,
   });
 };

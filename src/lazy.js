@@ -3,6 +3,7 @@ import { throttle, on, off, inView } from './utils'
 
 
 let hasBind = false
+let viewOffset = 0
 
 const { EVENTS, LAZY_CLASS } = constants
 
@@ -23,7 +24,7 @@ const handler = throttle(() => {
 
   if (len > 0) {
     lazys.forEach(lazy => {
-      if (inView(lazy)) {
+      if (inView(lazy, viewOffset)) {
         loadImage(lazy)
       }
     })
@@ -39,9 +40,10 @@ const events = (el, bool) => {
   })
 }
 
-const lazy = bool => {
+const lazy = (bool, offset) => {
   if (!typeof window || hasBind) return false
   if (bool && !hasBind) hasBind = true
+  if (typeof offset === 'number') viewOffset = offset
   events(window, bool)
 }
 

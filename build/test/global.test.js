@@ -4,7 +4,9 @@ describe('全局配置', function() {
   const hash = '50f940dbce46148638e03d0778a4c5f8jpeg'
   const loading = '7b73ae0bcb1e68afacbaff7d4b25780bjpeg'
   const error = '4f88f93f3797600783990d32e5673ab7jpeg'
+
   const createViewModel = ({ option, config }, style) => {
+
     const el = document.createElement('div')
     const id = `vm-${Date.now().toString(16)}`
 
@@ -24,13 +26,37 @@ describe('全局配置', function() {
     })
   }
 
-  // div# out of screen view
-  describe('{ globalLazy(全局): true, lazy(局部): true, inView: false }', () => {
+  describe('{ enableLazy(全局): true, lazy(局部): true, inView: true }', () => {
     let vm
 
     before(done => {
       vm = createViewModel({
-        option: { loading, globalLazy: true },
+        option: { loading, enableLazy: true },
+        config: { hash, lazy: true }
+      }, {
+        position: 'absolute',
+        top: 0,
+        left: 0
+      })
+      setTimeout(done, 2000)
+    })
+
+    it('测试通过', () => {
+      const img = vm.$el.querySelector('img')
+      expect(img.src)
+        .to.equal(VueImg.getSrc({
+          hash
+        }))
+    })
+  })
+
+  // div# out of screen view
+  describe('{ enableLazy(全局): true, lazy(局部): true, inView: false }', () => {
+    let vm
+
+    before(done => {
+      vm = createViewModel({
+        option: { loading, enableLazy: true },
         config: { hash, lazy: true }
       }, {
         marginTop: `${window.screen.height + 500}px`
@@ -47,12 +73,12 @@ describe('全局配置', function() {
     })
   })
 
-  describe('{ globalLazy(全局): true, lazy(局部): false, inView: false }', () => {
+  describe('{ enableLazy(全局): true, lazy(局部): false, inView: false }', () => {
     let vm
 
     before(done => {
       vm = createViewModel({
-        option: { loading, globalLazy: true },
+        option: { loading, enableLazy: true },
         config: { hash }
       }, {
         marginTop: `${window.screen.height + 500}px`
@@ -69,7 +95,7 @@ describe('全局配置', function() {
     })
   })
 
-  describe('{ globalLazy(全局): false, lazy(局部): true, inView: false }', () => {
+  describe('{ enableLazy(全局): false, lazy(局部): true, inView: false }', () => {
     let vm
 
     before(done => {
@@ -78,30 +104,6 @@ describe('全局配置', function() {
         config: { hash, lazy: true }
       }, {
         marginTop: `${window.screen.height + 500}px`
-      })
-      setTimeout(done, 2000)
-    })
-
-    it('测试通过', () => {
-      const img = vm.$el.querySelector('img')
-      expect(img.src)
-        .to.equal(VueImg.getSrc({
-          hash
-        }))
-    })
-  })
-  // Because it the first test, so the div# in the screen view
-  describe('{ globalLazy(全局): true, lazy(局部): true, inView: true }', () => {
-    let vm
-
-    before(done => {
-      vm = createViewModel({
-        option: { loading, globalLazy: true },
-        config: { hash, lazy: true }
-      }, {
-        position: 'absolute',
-        top: 0,
-        left: 0
       })
       setTimeout(done, 2000)
     })
@@ -254,5 +256,60 @@ describe('全局配置', function() {
     })
   })
 
+  describe('全局 { adapt }', () => {
+    let vm
+
+    before(done => {
+      vm = createViewModel({
+        option: { adapt: true },
+        config: { hash, width: 750, height: 750 }
+      })
+      setTimeout(done, 2000)
+    })
+
+    it('测试通过', () => {
+      const img = vm.$el.querySelector('img')
+      const { getComputedStyle } = window
+      expect(img.src)
+        .to.equal(VueImg.getSrc({
+          hash,
+          adapt: true,
+          width: 750,
+          height: 750
+        }))
+
+      expect(getComputedStyle(img).width).to.equal('640px')
+      expect(getComputedStyle(img).height).to.equal('640px')
+
+    })
+  })
+
+  describe('全局 + 局部 { adapt }', () => {
+    let vm
+
+    before(done => {
+      vm = createViewModel({
+        option: { adapt: true },
+        config: { hash, width: 750, height: 750, adapt: false }
+      })
+      setTimeout(done, 2000)
+    })
+
+    it('测试通过', () => {
+      const img = vm.$el.querySelector('img')
+      const { getComputedStyle } = window
+      expect(img.src)
+        .to.equal(VueImg.getSrc({
+          hash,
+          adapt: false,
+          width: 750,
+          height: 750
+        }))
+
+      expect(getComputedStyle(img).width).to.equal('750px')
+      expect(getComputedStyle(img).height).to.equal('750px')
+
+    })
+  })
 
 })

@@ -11,51 +11,8 @@ const protocol = location.protocol === 'https:' ? 'https://' : 'http://';
 const env = document.domain.match(/.(alpha|beta).ele(net)?.me$/);
 VueImg$1.cdn = protocol + (env ? `fuss${env[0]}` : 'fuss10.elemecdn.com');
 
-// Translate hash to path
-const hashToPath = hash => hash.replace(/^(\w)(\w\w)(\w{29}(\w*))$/, '/$1/$2/$3.$4');
-
-// Get image format
-const getFormat = ({ format, fallback }) => {
-  const isFormat = /^(jpg|jpeg|png|gif)$/;
-
-  if (isFormat.test(format)) return `format/${format}/`
-  if (VueImg$1.canWebp) return 'format/webp/'
-  return isFormat.test(fallback)
-    ? `format/${fallback}/`
-    : ''
-};
-
-// Get image size
-const getSize = ({ width, height }) => {
-  const thumb = 'thumbnail/';
-  const cover = `${width}x${height}`;
-
-  if (width && height) return `${thumb}!${cover}r/gravity/Center/crop/${cover}/`
-  if (width) return `${thumb}${width}x/`
-  if (height) return `${thumb}x${height}/`
-  return ''
-};
-
-// Get image size
-const getSrc = ({
-  hash,
-  width, height, quality,
-  format, fallback,
-  prefix, suffix,
-} = {}) => {
-  if (!hash || typeof hash !== 'string') return ''
-
-  const _prefix = typeof prefix === 'string' ? prefix : VueImg$1.cdn;
-  const _quality = typeof quality === 'number' ? `quality/${quality}/` : '';
-  const _format = getFormat({ format, fallback });
-  const _size = getSize({ width, height });
-  const _suffix = typeof suffix === 'string' ? suffix : '';
-  const params = `${_quality}${_format}${_size}${_suffix}`;
-
-  return _prefix + hashToPath(hash) + (params ? `?imageMogr/${params}` : '')
-};
-
 const hasProp = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
+const html = document.documentElement;
 
 const copyKeys = ({ source, target, keys }) => {
   keys.forEach(key => {
@@ -104,13 +61,88 @@ const off = (el, ev, fn) => {
   el.removeEventListener(ev, fn);
 };
 
-const inView = (el) => {
+const inView = (el, offset = 0) => {
   const rect = el.getBoundingClientRect();
 
-  return rect.top < window.innerHeight
-  && rect.bottom > 0
-  && rect.left < window.innerWidth
-  && rect.right > 0
+  return rect.top >= 0
+  && rect.bottom <= window.innerHeight + offset
+  && rect.left >= 0
+  && rect.right <= window.innerWidth
+};
+
+const resize = (size) => {
+  let viewWidth;
+  const dpr = window.devicePixelRatio;
+  const dataDpr = document.documentElement.getAttribute('data-dpr');
+  const ratio = dataDpr ? (dpr / dataDpr) : dpr;
+
+  try {
+    viewWidth = +(html.getAttribute('style').match(/(\d+)/) || [])[1];
+  } catch(e) {
+    const w = html.offsetWidth;
+    if (w / dpr > 540) {
+      viewWidth = 540 * dpr / 10;
+    } else {
+      viewWidth = w / 10;
+    }
+  }
+
+  viewWidth = viewWidth * ratio;
+
+  if (Number(viewWidth) >= 0 && typeof viewWidth === 'number') {
+    return (size * viewWidth) / 75 // 75 is the 1/10 iphone6 deivce width pixel
+  } else {
+    return size
+  }
+};
+
+// Translate hash to path
+const hashToPath = hash => hash.replace(/^(\w)(\w\w)(\w{29}(\w*))$/, '/$1/$2/$3.$4');
+
+// Get image format
+const getFormat = ({ format, fallback }) => {
+  const isFormat = /^(jpg|jpeg|png|gif)$/;
+
+  if (isFormat.test(format)) return `format/${format}/`
+  if (VueImg$1.canWebp) return 'format/webp/'
+  return isFormat.test(fallback)
+    ? `format/${fallback}/`
+    : ''
+};
+
+// Get image size
+const getSize = ({ width, height, adapt }) => {
+
+  const w = width && (adapt ? resize(width) : width);
+  const h = height && (adapt ? resize(height) : height);
+
+  const thumb = 'thumbnail/';
+  const cover = `${w}x${h}`;
+
+  if (width && height) return `${thumb}!${cover}r/gravity/Center/crop/${cover}/`
+  if (width) return `${thumb}${w}x/`
+  if (height) return `${thumb}x${h}/`
+
+  return ''
+};
+
+// Get image size
+const getSrc = ({
+  hash, adapt,
+  width, height, quality,
+  format, fallback,
+  prefix, suffix,
+} = {}) => {
+  if (!hash || typeof hash !== 'string') return ''
+
+  const _prefix = typeof prefix === 'string' ? prefix : VueImg$1.cdn;
+  const _quality = typeof quality === 'number' ? `quality/${quality}/` : '';
+  const _format = getFormat({ format, fallback });
+  const _size = getSize({ width, height, adapt });
+  const _suffix = typeof suffix === 'string' ? suffix : '';
+  const params = `${_quality}${_format}${_size}${_suffix}`;
+
+  return _prefix + hashToPath(hash) + (params ? `?imageMogr/${params}` : '')
 };
 
 var getImageClass = (opt = {}) => {
@@ -122,8 +154,8 @@ var getImageClass = (opt = {}) => {
         target: this,
         keys: [
           'loading', 'error',
-          'quality',
-          'prefix', 'suffix',
+          'quality', 'delay', 'viewOffset',
+          'prefix', 'suffix', 'adapt', 'enableLazy',
         ],
       });
     }
@@ -136,7 +168,7 @@ var getImageClass = (opt = {}) => {
         target: params,
         keys: [
           'width', 'height', 'quality',
-          'format', 'fallback',
+          'format', 'fallback', 'adapt',
           'prefix', 'suffix',
         ],
       });
@@ -158,8 +190,8 @@ var getImageClass = (opt = {}) => {
         keys: [
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
-          'format', 'fallback',
-          'prefix', 'suffix',
+          'format', 'fallback', 'adapt',
+          'prefix', 'suffix', 'defer', 'lazy',
         ],
       });
     }
@@ -190,6 +222,7 @@ var constants = Object.freeze({
 });
 
 let hasBind = false;
+let viewOffset = 0;
 
 const { EVENTS: EVENTS$1, LAZY_CLASS: LAZY_CLASS$1 } = constants;
 
@@ -210,7 +243,7 @@ const handler = throttle(() => {
 
   if (len > 0) {
     lazys.forEach(lazy => {
-      if (inView(lazy)) {
+      if (inView(lazy, viewOffset)) {
         loadImage(lazy);
       }
     });
@@ -226,35 +259,48 @@ const events = (el, bool) => {
   });
 };
 
-const lazy = bool => {
+const lazy = (bool, offset) => {
   if (!typeof window || hasBind) return false
   if (bool && !hasBind) hasBind = true;
+  if (typeof offset === 'number') viewOffset = offset;
   events(window, bool);
 };
 
 // Vue plugin installer
 const install = (Vue, opt = {}) => {
   const vImg = getImageClass(opt);
-  const { globalLazy } = opt;
+  const { enableLazy, viewOffset: offset } = opt;
+  const promises = [];
+
   const update = (el, binding, vnode) => {
     const vImgIns = new vImg(binding.value);
     const vImgSrc = vImgIns.toImageSrc();
     const vImgErr = vImgIns.toErrorSrc();
-    if (!vImgSrc) return
+
+    if (!vImgSrc) return Promise.resolve()
 
     const img = new Image();
-    img.onload = () => {
-      setAttr(el, vImgSrc, vnode.tag);
-    };
-    if (vImgErr) {
-      img.onerror = () => {
-        setAttr(el, vImgErr, vnode.tag);
+    const delay = +vImgIns.delay || 5000;
+
+    return new Promise(resolve => {
+      img.onload = () => {
+        setAttr(el, vImgSrc, vnode.tag);
+        resolve();
       };
-    }
-    img.src = vImgSrc;
+      if (vImgErr) {
+        img.onerror = () => {
+          setAttr(el, vImgErr, vnode.tag);
+          resolve();
+        };
+      }
+      setTimeout(() => {
+        resolve();
+      }, delay);
+      img.src = vImgSrc;
+    })
   };
 
-  globalLazy && lazy(true);
+  enableLazy && lazy(true, offset);
 
   // Register Vue directive
   Vue.directive('img', {
@@ -262,26 +308,45 @@ const install = (Vue, opt = {}) => {
       const vImgIns = new vImg(binding.value);
       const loadSrc = vImgIns.toLoadingSrc();
       const dataSrc = vImgIns.toImageSrc();
-      const { lazy: lazy$$1 } = binding.value;
+      const { lazy: lazy$$1, defer } = binding.value;
 
       if (loadSrc) setAttr(el, loadSrc, vnode.tag);
-
-      if (lazy$$1 === true && globalLazy === true) {
-        el.classList.add(LAZY_CLASS);
-        el.setAttribute('data-src', dataSrc);
+      if (enableLazy) {
+        if (lazy$$1 === true) {
+          el.classList.add(LAZY_CLASS);
+          el.setAttribute('data-src', dataSrc);
+        } else {
+          update(el, binding, vnode);
+        }
       } else {
-        update(el, binding, vnode);       
+        if (!defer) {
+          promises.push(update(el, binding, vnode));
+        }
       }
     },
 
     inserted(el, binding, vnode) {
-      const { lazy: lazy$$1 } = binding.value;
-
-      if (inView(el) && lazy$$1 === true && globalLazy === true) {
-        update(el, binding, vnode);
+      const { lazy: lazy$$1, defer } = binding.value;
+      if (enableLazy) {
+        if (inView(el) && lazy$$1 === true) {
+          update(el, binding, vnode);
+        }
+      } else {
+        if (!defer) return
+        if (inView(el)) {
+          promises.push(update(el, binding, vnode));
+        } else {
+          Vue.nextTick(() => {
+            Promise.all(promises)
+            .then(() => {
+              promises.length = 0;
+              update(el, binding, vnode);
+            })
+            .catch(() => {});
+          });
+        }
       }
     },
-
     update,
   });
 };

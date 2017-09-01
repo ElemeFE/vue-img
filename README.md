@@ -66,7 +66,7 @@ VueImg.getSrc({ ... }) // [Function] 获取图片地址
 | lazy       | [Boolean]图片是否需要懒加载      | ✕    | 〇    | ✕         |
 
 - `suffix` 参数可用于模糊、旋转等特殊处理，具体请参考[《七牛 CDN 开发者文档》](http://developer.qiniu.com/code/v6/api/kodo-api/image/imagemogr2.html)。
-- `lazy`参数以`globalLazy`参数为前置条件，也就是说，要使用图片懒加载功能必须全局配置`globalLazy`参数为`true`。**懒加载功能仅支持`img`原始**。
+- `lazy`参数以`globalLazy`参数为前置条件，也就是说，要使用图片懒加载功能必须全局配置`globalLazy`参数为`true`。**懒加载功能仅支持`img`元素**。
 
 ## 贡献代码
 

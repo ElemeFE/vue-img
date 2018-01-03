@@ -8,7 +8,7 @@ img.src = 'data:image/webp;base64,UklGRkoAAABXRUJQVlA4WAoAAAAQAAAAAAAAAAAAQUxQSA
 
 // Default cdn prefix
 const protocol = location.protocol === 'https:' ? 'https://' : 'http://';
-const env = document.domain.match(/.(alpha|beta).ele(net)?.me$/);
+const env = document.domain.match(/.(alpha|beta|ar).ele(net)?.me$/);
 VueImg$1.cdn = protocol + (env ? `fuss${env[0]}` : 'fuss10.elemecdn.com');
 
 const hasProp = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);

@@ -4,10 +4,16 @@ describe('全局配置', function() {
   const hash = '50f940dbce46148638e03d0778a4c5f8jpeg'
   const loading = '7b73ae0bcb1e68afacbaff7d4b25780bjpeg'
   const error = '4f88f93f3797600783990d32e5673ab7jpeg'
-  const createViewModel = ({ option, config }) => {
+
+  const createViewModel = ({ option, config }, style) => {
 
     const el = document.createElement('div')
     const id = `vm-${Date.now().toString(16)}`
+
+    if (style) {
+      Object.assign(el.style, style)
+    }
+
     el.id = id;
     el.innerHTML = `<img v-img="config">`
     document.body.appendChild(el)
@@ -19,6 +25,97 @@ describe('全局配置', function() {
       data: { config }
     })
   }
+
+  describe('{ enableLazy(全局): true, lazy(局部): true, inView: true }', () => {
+    let vm
+
+    before(done => {
+      vm = createViewModel({
+        option: { loading, enableLazy: true },
+        config: { hash, lazy: true }
+      }, {
+        position: 'absolute',
+        top: 0,
+        left: 0
+      })
+      setTimeout(done, 2000)
+    })
+
+    it('测试通过', () => {
+      const img = vm.$el.querySelector('img')
+      expect(img.src)
+        .to.equal(VueImg.getSrc({
+          hash
+        }))
+    })
+  })
+
+  // div# out of screen view
+  describe('{ enableLazy(全局): true, lazy(局部): true, inView: false }', () => {
+    let vm
+
+    before(done => {
+      vm = createViewModel({
+        option: { loading, enableLazy: true },
+        config: { hash, lazy: true }
+      }, {
+        marginTop: `${window.screen.height + 500}px`
+      })
+      setTimeout(done, 2000)
+    })
+
+    it('测试通过', () => {
+      const img = vm.$el.querySelector('img')
+      expect(img.src)
+        .to.equal(VueImg.getSrc({
+          hash: loading
+        }))
+    })
+  })
+
+  describe('{ enableLazy(全局): true, lazy(局部): false, inView: false }', () => {
+    let vm
+
+    before(done => {
+      vm = createViewModel({
+        option: { loading, enableLazy: true },
+        config: { hash }
+      }, {
+        marginTop: `${window.screen.height + 500}px`
+      })
+      setTimeout(done, 2000)
+    })
+
+    it('测试通过', () => {
+      const img = vm.$el.querySelector('img')
+      expect(img.src)
+        .to.equal(VueImg.getSrc({
+          hash
+        }))
+    })
+  })
+
+  describe('{ enableLazy(全局): false, lazy(局部): true, inView: false }', () => {
+    let vm
+
+    before(done => {
+      vm = createViewModel({
+        option: { loading },
+        config: { hash, lazy: true }
+      }, {
+        marginTop: `${window.screen.height + 500}px`
+      })
+      setTimeout(done, 2000)
+    })
+
+    it('测试通过', () => {
+      const img = vm.$el.querySelector('img')
+      expect(img.src)
+        .to.equal(VueImg.getSrc({
+          hash
+        }))
+    })
+  })
 
   describe('{ loading }', () => {
     let vm

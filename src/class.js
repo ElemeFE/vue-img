@@ -10,8 +10,8 @@ export default (opt = {}) => {
         target: this,
         keys: [
           'loading', 'error',
-          'quality', 'delay',
-          'prefix', 'suffix', 'adapt',
+          'quality', 'delay', 'viewOffset',
+          'prefix', 'suffix', 'adapt', 'enableLazy',
         ],
       })
     }
@@ -47,7 +47,7 @@ export default (opt = {}) => {
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
           'format', 'fallback', 'adapt',
-          'prefix', 'suffix', 'defer',
+          'prefix', 'suffix', 'defer', 'lazy',
         ],
       })
     }

@@ -40,6 +40,48 @@ var setAttr = function (el, src, tag) {
   }
 };
 
+var throttle = function (action, delay) {
+  var timeout = null;
+  var lastRun = 0;
+  return function() {
+    if (timeout) {
+      return
+    }
+    var elapsed = Date.now() - lastRun;
+    var context = this;
+    var args = arguments;
+    var runCallback = function() {
+      lastRun = Date.now();
+      timeout = false;
+      action.apply(context, args);
+    };
+    if (elapsed >= delay) {
+      runCallback();
+    } else {
+      timeout = setTimeout(runCallback, delay);
+    }
+  }
+};
+
+var on = function (el, ev, fn) {
+  el.addEventListener(ev, fn);
+};
+
+var off = function (el, ev, fn) {
+  el.removeEventListener(ev, fn);
+};
+
+var inView = function (el, offset) {
+  if ( offset === void 0 ) offset = 0;
+
+  var rect = el.getBoundingClientRect();
+
+  return rect.top >= 0
+  && rect.bottom <= window.innerHeight + offset
+  && rect.left >= 0
+  && rect.right <= window.innerWidth
+};
+
 var resize = function (size) {
   var viewWidth;
   var dpr = window.devicePixelRatio;
@@ -64,15 +106,6 @@ var resize = function (size) {
   } else {
     return size
   }
-};
-
-var inViewport = function (el) {
-  var rect = el.getBoundingClientRect();
-
-  return rect.top > 0
-    && rect.bottom < window.innerHeight
-    && rect.left > 0
-    && rect.right < window.innerWidth
 };
 
 // Translate hash to path
@@ -147,8 +180,8 @@ var getImageClass = function (opt) {
       target: this,
       keys: [
         'loading', 'error',
-        'quality', 'delay',
-        'prefix', 'suffix', 'adapt' ],
+        'quality', 'delay', 'viewOffset',
+        'prefix', 'suffix', 'adapt', 'enableLazy' ],
     });
   };
 
@@ -181,7 +214,7 @@ var getImageClass = function (opt) {
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
           'format', 'fallback', 'adapt',
-          'prefix', 'suffix', 'defer' ],
+          'prefix', 'suffix', 'defer', 'lazy' ],
       });
     }
 
@@ -207,9 +240,62 @@ var getImageClass = function (opt) {
   return vImg
 };
 
+var LAZY_CLASS = 'v-jo-lazy';
+var EVENTS = ['scroll', 'wheel', 'mousewheel', 'resize', 'touchmove'];
+
+var hasBind = false;
+var viewOffset = 0;
+
+var EVENTS$1 = EVENTS;
+var LAZY_CLASS$1 = LAZY_CLASS;
+
+var loadImage = function (item) {
+  var img = new Image();
+  img.src = item.dataset.src;
+
+  img.onload = function () {
+    item.src = item.dataset.src;
+    item.classList.remove(LAZY_CLASS$1);
+  };
+};
+
+var handler = throttle(function () {
+
+  var lazys = document.querySelectorAll(("img." + LAZY_CLASS$1));
+  var len = lazys.length;
+
+  if (len > 0) {
+    lazys.forEach(function (lazy) {
+      if (inView(lazy, viewOffset)) {
+        loadImage(lazy);
+      }
+    });
+  }
+
+}, 200);
+
+var events = function (el, bool) {
+  EVENTS$1.forEach(function (ev) {
+    bool
+    ? on(el, ev, handler)
+    : off(el, ev, handler);
+  });
+};
+
+var lazy = function (bool, offset) {
+  if (!typeof window || hasBind) { return false }
+  if (bool && !hasBind) { hasBind = true; }
+  if (typeof offset === 'number') { viewOffset = offset; }
+  events(window, bool);
+};
+
 // Vue plugin installer
 var install = function (Vue, opt) {
+  if ( opt === void 0 ) opt = {};
+
   var vImg = getImageClass(opt);
+  var enableLazy = opt.enableLazy;
+  var offset = opt.viewOffset;
   var promises = [];
 
   var update = function (el, binding, vnode) {
@@ -240,37 +326,55 @@ var install = function (Vue, opt) {
     })
   };
 
+  enableLazy && lazy(true, offset);
+
   // Register Vue directive
   Vue.directive('img', {
     bind: function bind(el, binding, vnode) {
-      var loadSrc = new vImg(binding.value).toLoadingSrc();
+      var vImgIns = new vImg(binding.value);
+      var loadSrc = vImgIns.toLoadingSrc();
+      var dataSrc = vImgIns.toImageSrc();
       var ref = binding.value;
+      var lazy$$1 = ref.lazy;
       var defer = ref.defer;
 
       if (loadSrc) { setAttr(el, loadSrc, vnode.tag); }
-      if (!defer) {
-        promises.push(update(el, binding, vnode));
+      if (enableLazy) {
+        if (lazy$$1 === true) {
+          el.classList.add(LAZY_CLASS);
+          el.setAttribute('data-src', dataSrc);
+        } else {
+          update(el, binding, vnode);
+        }
+      } else {
+        if (!defer) {
+          promises.push(update(el, binding, vnode));
+        }
       }
     },
+
     inserted: function inserted(el, binding, vnode) {
       var ref = binding.value;
+      var lazy$$1 = ref.lazy;
       var defer = ref.defer;
-      if (!defer) { return }
-      if (inViewport(el)) {
-
-        promises.push(update(el, binding, vnode));
-
+      if (enableLazy) {
+        if (inView(el) && lazy$$1 === true) {
+          update(el, binding, vnode);
+        }
       } else {
-
-        Vue.nextTick(function () {
-          Promise.all(promises)
-          .then(function () {
-            promises.length = 0;
-            update(el, binding, vnode);
-          })
-          .catch(function () {});
-        });
-
+        if (!defer) { return }
+        if (inView(el)) {
+          promises.push(update(el, binding, vnode));
+        } else {
+          Vue.nextTick(function () {
+            Promise.all(promises)
+            .then(function () {
+              promises.length = 0;
+              update(el, binding, vnode);
+            })
+            .catch(function () {});
+          });
+        }
       }
     },
     update: update,

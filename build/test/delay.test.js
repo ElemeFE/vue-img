@@ -37,7 +37,7 @@ describe('延迟加载', function() {
 
     before(done => {
       setViewModel(id, 5000, 100)
-      setTimeout(done, 500) // 500ms保证100张非延迟图片加载不完。
+      setTimeout(done, 100) // 500ms保证100张非延迟图片加载不完。
     })
 
     it('测试通过', () => {

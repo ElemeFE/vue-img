@@ -124,6 +124,7 @@ var getSrc = function (ref) {
   var fallback = ref.fallback;
   var prefix = ref.prefix;
   var suffix = ref.suffix;
+  var urlFormatter = ref.urlFormatter;
 
   if (!hash || typeof hash !== 'string') { return '' }
 
@@ -133,8 +134,9 @@ var getSrc = function (ref) {
   var _size = getSize({ width: width, height: height, adapt: adapt });
   var _suffix = typeof suffix === 'string' ? suffix : '';
   var params = "" + _quality + _format + _size + _suffix;
-
-  return _prefix + hashToPath(hash) + (params ? ("?imageMogr/" + params) : '')
+  var src = _prefix + hashToPath(hash) + (params ? ("?imageMogr/" + params) : '');
+  if (typeof urlFormatter === 'function') { src = urlFormatter(src); }
+  return src
 };
 
 var getImageClass = function (opt) {

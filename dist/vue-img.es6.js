@@ -101,6 +101,7 @@ const getSrc = ({
   width, height, quality,
   format, fallback,
   prefix, suffix,
+  urlFormatter,
 } = {}) => {
   if (!hash || typeof hash !== 'string') return ''
 
@@ -110,8 +111,9 @@ const getSrc = ({
   const _size = getSize({ width, height, adapt });
   const _suffix = typeof suffix === 'string' ? suffix : '';
   const params = `${_quality}${_format}${_size}${_suffix}`;
-
-  return _prefix + hashToPath(hash) + (params ? `?imageMogr/${params}` : '')
+  let src = _prefix + hashToPath(hash) + (params ? `?imageMogr/${params}` : '');
+  if (typeof urlFormatter === 'function') src = urlFormatter(src);
+  return src
 };
 
 var getImageClass = (opt = {}) => {

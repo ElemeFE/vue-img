@@ -61,4 +61,11 @@ describe('检测核心函数 getSrc', () => {
     expect(VueImg.getSrc(config))
       .to.include('format/png')
   })
+
+  it('{ urlFormatter }', () => {
+    const _config = Object.assign({}, config)
+    _config.urlFormatter = url => url.replace(/\b(imageMogr)\b/, $1 => `${$1}2`)
+    expect(VueImg.getSrc(_config))
+      .to.include('imageMogr2/')
+  })
 })

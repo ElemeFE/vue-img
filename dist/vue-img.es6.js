@@ -163,6 +163,7 @@ var getImageClass = (opt = {}) => {
           'width', 'height', 'quality',
           'format', 'fallback', 'adapt',
           'prefix', 'suffix', 'defer',
+          'urlFormatter',
         ],
       });
     }

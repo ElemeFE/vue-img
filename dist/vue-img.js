@@ -150,7 +150,8 @@ var getImageClass = function (opt) {
       keys: [
         'loading', 'error',
         'quality', 'delay',
-        'prefix', 'suffix', 'adapt' ],
+        'prefix', 'suffix', 'adapt',
+      ],
     });
   };
 
@@ -163,7 +164,8 @@ var getImageClass = function (opt) {
       keys: [
         'width', 'height', 'quality',
         'format', 'fallback', 'adapt',
-        'prefix', 'suffix' ],
+        'prefix', 'suffix',
+      ],
     });
     return getSrc(params)
   };
@@ -183,7 +185,9 @@ var getImageClass = function (opt) {
           'hash', 'loading', 'error',
           'width', 'height', 'quality',
           'format', 'fallback', 'adapt',
-          'prefix', 'suffix', 'defer' ],
+          'prefix', 'suffix', 'defer',
+          'urlFormatter',
+        ],
       });
     }
 

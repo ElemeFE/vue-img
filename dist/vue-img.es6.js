@@ -1,10 +1,7 @@
 const VueImg$1 = Object.create(null);
 
 // Check webP support
-VueImg$1.canWebp = false;
-const img = new Image();
-img.onload = () => { VueImg$1.canWebp = true; };
-img.src = 'data:image/webp;base64,UklGRkoAAABXRUJQVlA4WAoAAAAQAAAAAAAAAAAAQUxQSAsAAAABBxAREYiI/gcAAABWUDggGAAAADABAJ0BKgEAAQABABwlpAADcAD+/gbQAA==';
+VueImg$1.canWebp = !![].map && document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0;
 
 // Default cdn prefix
 const protocol = location.protocol === 'https:' ? 'https://' : 'http://';

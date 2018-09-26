@@ -18,11 +18,16 @@ const install = (Vue, opt) => {
 
     return new Promise(resolve => {
       img.onload = () => {
-        setAttr(el, vImgSrc, vnode.tag)
+        setAttr(el, img.src, vnode.tag)
         resolve()
       }
-      if (vImgErr) {
-        img.onerror = () => {
+      img.onerror = () => {
+        // webp图片加载失败降级到普通图片
+        // 兼容客户端处理webp失败的情况
+        const webpReg = /format\/webp\//
+        if (webpReg.test(img.src)) {
+          img.src = vImgSrc.replace(webpReg, '')
+        } else if (vImgErr) {
           setAttr(el, vImgErr, vnode.tag)
           resolve()
         }

@@ -4,10 +4,37 @@
   (global.VueImg = factory());
 }(this, (function () { 'use strict';
 
+var ua = window.navigator.userAgent;
+
+var isIOS = /iphone|ios|ipad|ipod/i.test(ua);
+
+var isAlipay = /AliApp\(AP\/([\d.]+)\)/i.test(ua);
+
+var compareAlipayVersion = function (targetVersion) {
+  var version = ua.match(/AlipayClient[a-zA-Z]*\/(\d+(?:\.\d+)+)/);
+  version = version && version.length ? version[1] : '';
+  version = version.split('.');
+
+  targetVersion = targetVersion.split('.');
+  for (var i = 0, n1 = (void 0), n2 = (void 0); i < version.length; i++) {
+    n1 = parseInt(targetVersion[i], 10) || 0;
+    n2 = parseInt(version[i], 10) || 0;
+    if (n1 > n2) { return -1 }
+    if (n1 < n2) { return 1 }
+  }
+
+  return 0
+};
+
+var checkSupport = function () {
+  // only support since 10.1.0
+  return isIOS && isAlipay && compareAlipayVersion('10.1.0') >= 0
+};
+
 var VueImg$1 = Object.create(null);
 
 // Check webP support
-VueImg$1.canWebp = !![].map && document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0;
+VueImg$1.canWebp = checkSupport() || (!![].map && document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0);
 
 // Default cdn prefix
 var protocol = location.protocol === 'https:' ? 'https://' : 'http://';
@@ -147,8 +174,7 @@ var getImageClass = function (opt) {
       keys: [
         'loading', 'error',
         'quality', 'delay',
-        'prefix', 'suffix', 'adapt',
-      ],
+        'prefix', 'suffix', 'adapt' ],
     });
   };
 
@@ -161,8 +187,7 @@ var getImageClass = function (opt) {
       keys: [
         'width', 'height', 'quality',
         'format', 'fallback', 'adapt',
-        'prefix', 'suffix',
-      ],
+        'prefix', 'suffix' ],
     });
     return getSrc(params)
   };
@@ -183,8 +208,7 @@ var getImageClass = function (opt) {
           'width', 'height', 'quality',
           'format', 'fallback', 'adapt',
           'prefix', 'suffix', 'defer',
-          'urlFormatter',
-        ],
+          'urlFormatter' ],
       });
     }
 
@@ -227,15 +251,20 @@ var install = function (Vue, opt) {
 
     return new Promise(function (resolve) {
       img.onload = function () {
-        setAttr(el, vImgSrc, vnode.tag);
+        setAttr(el, img.src, vnode.tag);
         resolve();
       };
-      if (vImgErr) {
-        img.onerror = function () {
+      img.onerror = function () {
+        // webp图片加载失败降级到普通图片
+        // 兼容客户端处理webp失败的情况
+        var webpReg = /format\/webp\//;
+        if (webpReg.test(img.src)) {
+          img.src = vImgSrc.replace(webpReg, '');
+        } else if (vImgErr) {
           setAttr(el, vImgErr, vnode.tag);
           resolve();
-        };
-      }
+        }
+      };
       setTimeout(function () {
         resolve();
       }, delay);

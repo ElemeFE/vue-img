@@ -1,7 +1,34 @@
+const ua = window.navigator.userAgent;
+
+const isIOS = /iphone|ios|ipad|ipod/i.test(ua);
+
+const isAlipay = /AliApp\(AP\/([\d.]+)\)/i.test(ua);
+
+const compareAlipayVersion = (targetVersion) => {
+  let version = ua.match(/AlipayClient[a-zA-Z]*\/(\d+(?:\.\d+)+)/);
+  version = version && version.length ? version[1] : '';
+  version = version.split('.');
+
+  targetVersion = targetVersion.split('.');
+  for (let i = 0, n1, n2; i < version.length; i++) {
+    n1 = parseInt(targetVersion[i], 10) || 0;
+    n2 = parseInt(version[i], 10) || 0;
+    if (n1 > n2) return -1
+    if (n1 < n2) return 1
+  }
+
+  return 0
+};
+
+const checkSupport = () => {
+  // only support since 10.1.0
+  return isIOS && isAlipay && compareAlipayVersion('10.1.0') >= 0
+};
+
 const VueImg$1 = Object.create(null);
 
 // Check webP support
-VueImg$1.canWebp = !![].map && document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0;
+VueImg$1.canWebp = checkSupport() || (!![].map && document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0);
 
 // Default cdn prefix
 const protocol = location.protocol === 'https:' ? 'https://' : 'http://';
@@ -198,15 +225,20 @@ const install = (Vue, opt) => {
 
     return new Promise(resolve => {
       img.onload = () => {
-        setAttr(el, vImgSrc, vnode.tag);
+        setAttr(el, img.src, vnode.tag);
         resolve();
       };
-      if (vImgErr) {
-        img.onerror = () => {
+      img.onerror = () => {
+        // webp图片加载失败降级到普通图片
+        // 兼容客户端处理webp失败的情况
+        const webpReg = /format\/webp\//;
+        if (webpReg.test(img.src)) {
+          img.src = vImgSrc.replace(webpReg, '');
+        } else if (vImgErr) {
           setAttr(el, vImgErr, vnode.tag);
           resolve();
-        };
-      }
+        }
+      };
       setTimeout(() => {
         resolve();
       }, delay);

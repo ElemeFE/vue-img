@@ -1,7 +1,9 @@
+import { checkSupport } from './device'
+
 const VueImg = Object.create(null)
 
 // Check webP support
-VueImg.canWebp = !![].map && document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0
+VueImg.canWebp = checkSupport() || (!![].map && document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0)
 
 // Default cdn prefix
 const protocol = location.protocol === 'https:' ? 'https://' : 'http://'

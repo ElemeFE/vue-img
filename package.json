@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/banricho/vue-img.git"
+    "url": "git+https://gitlab.alibaba-inc.com/eleme-fe/vue-img.git"
   },
   "author": "banricho",
   "license": "MIT",

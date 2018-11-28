@@ -39,7 +39,8 @@ VueImg$1.canWebp = checkSupport() || (!![].map && document.createElement('canvas
 // Default cdn prefix
 var protocol = location.protocol === 'https:' ? 'https://' : 'http://';
 var env = document.domain.match(/.(alpha|beta|ar).ele(net)?.me$/);
-VueImg$1.cdn = protocol + (env ? ("fuss" + (env[0])) : 'fuss10.elemecdn.com');
+VueImg$1.cdn = VueImg$1.qiniuCdn = protocol + (env ? ("fuss" + (env[0])) : 'fuss10.elemecdn.com');
+VueImg$1.aliCdn = protocol + (env ? ("cube" + (env[0])) : 'cube.elemecdn.com');
 
 var hasProp = function (obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); };
 var html = document.documentElement;
@@ -136,8 +137,33 @@ var getSize = function (ref) {
   return ''
 };
 
-// Get image size
-var getSrc = function (ref) {
+var getAliSize = function (ref) {
+  var width = ref.width;
+  var height = ref.height;
+  var adapt = ref.adapt;
+
+  var w = width && (adapt ? resize(width) : width);
+  var h = height && (adapt ? resize(height) : height);
+  if (width && height) { return ("/resize,w_" + w + ",h_" + h + ",m_fixed") }
+  if (width) { return ("/resize,w_" + w) }
+  if (height) { return ("/resize,h_" + h) }
+  return ''
+};
+
+var getAliFormat = function (ref) {
+  var format = ref.format;
+  var fallback = ref.fallback;
+
+  var formatRule = /^(jpg|png|gif)$/;
+  if (formatRule.test(format)) { return ("/format," + format) }
+  // https://help.aliyun.com/document_detail/44704.html
+  if (format === 'jpeg') { return '/format,jpg/interlace,1' }
+  if (VueImg$1.canWebp) { return '/format,webp' }
+  return formatRule.test(fallback) ? ("/format," + fallback) : ''
+};
+
+
+var getAliOssSrc = function (ref) {
   if ( ref === void 0 ) ref = {};
   var hash = ref.hash;
   var adapt = ref.adapt;
@@ -150,9 +176,32 @@ var getSrc = function (ref) {
   var suffix = ref.suffix;
   var urlFormatter = ref.urlFormatter;
 
-  if (!hash || typeof hash !== 'string') { return '' }
+  var _prefix = typeof prefix === 'string' ? prefix : VueImg$1.aliCdn;
+  var _quality = typeof quality === 'number' ? ("/quality,q_" + quality) : '';
+  var _size = getAliSize({ width: width, height: height, adapt: adapt });
+  var _format = getAliFormat({ format: format, fallback: fallback });
+  var _suffix = typeof suffix === 'string' ? suffix : '';
+  var params = "" + _quality + _format + _size + _suffix;
+  var src = _prefix + hashToPath(hash) + (params ? ("?x-oss-process=image" + params) : '');
+  if (typeof urlFormatter === 'function') { src = urlFormatter(src); }
+  return src
+};
 
-  var _prefix = typeof prefix === 'string' ? prefix : VueImg$1.cdn;
+
+var getQiniuSrc = function (ref) {
+  if ( ref === void 0 ) ref = {};
+  var hash = ref.hash;
+  var adapt = ref.adapt;
+  var width = ref.width;
+  var height = ref.height;
+  var quality = ref.quality;
+  var format = ref.format;
+  var fallback = ref.fallback;
+  var prefix = ref.prefix;
+  var suffix = ref.suffix;
+  var urlFormatter = ref.urlFormatter;
+
+  var _prefix = typeof prefix === 'string' ? prefix : VueImg$1.qiniuCdn;
   var _quality = typeof quality === 'number' ? ("quality/" + quality + "/") : '';
   var _format = getFormat({ format: format, fallback: fallback });
   var _size = getSize({ width: width, height: height, adapt: adapt });
@@ -161,6 +210,17 @@ var getSrc = function (ref) {
   var src = _prefix + hashToPath(hash) + (params ? ("?imageMogr/" + params) : '');
   if (typeof urlFormatter === 'function') { src = urlFormatter(src); }
   return src
+};
+
+
+var getSrc = function (options) {
+  if ( options === void 0 ) options = {};
+
+  if (!options.hash || typeof options.hash !== 'string') { return '' }
+  if (options.cdn === 'ali') {
+    return getAliOssSrc(options)
+  }
+  return getQiniuSrc(options)
 };
 
 var getImageClass = function (opt) {
@@ -174,7 +234,8 @@ var getImageClass = function (opt) {
       keys: [
         'loading', 'error',
         'quality', 'delay',
-        'prefix', 'suffix', 'adapt' ],
+        'prefix', 'suffix', 'adapt',
+        'cdn' ],
     });
   };
 
@@ -187,7 +248,8 @@ var getImageClass = function (opt) {
       keys: [
         'width', 'height', 'quality',
         'format', 'fallback', 'adapt',
-        'prefix', 'suffix' ],
+        'prefix', 'suffix', 'cdn'
+      ],
     });
     return getSrc(params)
   };
@@ -208,7 +270,7 @@ var getImageClass = function (opt) {
           'width', 'height', 'quality',
           'format', 'fallback', 'adapt',
           'prefix', 'suffix', 'defer',
-          'urlFormatter' ],
+          'urlFormatter', 'cdn' ],
       });
     }
 
@@ -257,7 +319,8 @@ var install = function (Vue, opt) {
       img.onerror = function () {
         // webp图片加载失败降级到普通图片
         // 兼容客户端处理webp失败的情况
-        var webpReg = /format\/webp\//;
+        // 兼容阿里云的 webp 拼接格式（`/format,webp`）
+        var webpReg = /format[/,]webp\/?/;
         if (webpReg.test(img.src)) {
           img.src = vImgSrc.replace(webpReg, '');
         } else if (vImgErr) {

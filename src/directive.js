@@ -24,7 +24,8 @@ const install = (Vue, opt) => {
       img.onerror = () => {
         // webp图片加载失败降级到普通图片
         // 兼容客户端处理webp失败的情况
-        const webpReg = /format\/webp\//
+        // 兼容阿里云的 webp 拼接格式（`/format,webp`）
+        const webpReg = /format[/,]webp\/?/
         if (webpReg.test(img.src)) {
           img.src = vImgSrc.replace(webpReg, '')
         } else if (vImgErr) {

@@ -183,16 +183,22 @@ var getAliOssSrc = function (ref) {
   var urlFormatter = ref.urlFormatter;
 
   var _prefix = typeof prefix === 'string' ? prefix : VueImg$1.aliCdn;
-  var _quality = typeof quality === 'number' ? ("/quality,q_" + quality) : '';
-  var _size = getAliSize({ width: width, height: height, adapt: adapt });
-  var _format = getAliFormat({ format: format, fallback: fallback });
   var _suffix = typeof suffix === 'string' ? suffix : '';
-  var params = "" + _quality + _format + _size + _suffix;
-  var src = _prefix + hashToPath(hash) + (params ? ("?x-oss-process=image" + params) : '');
+  var src = _prefix + hashToPath(hash);
+  // 阿里只支持如下格式图片的处理
+  var supportFormats = /(jpg|png|bmp|gif|webp|tiff)$/;
+  if (supportFormats.test(hash)) {
+    var _quality = typeof quality === 'number' ? ("/quality,q_" + quality) : '';
+    var _size = getAliSize({ width: width, height: height, adapt: adapt });
+    var _format = getAliFormat({ format: format, fallback: fallback });
+    var params = "" + _quality + _format + _size + _suffix;
+    src += (params ? ("?x-oss-process=image" + params) : '');
+  } else {
+    src += _suffix;
+  }
   if (typeof urlFormatter === 'function') { src = urlFormatter(src); }
   return src
 };
-
 
 var getQiniuSrc = function (ref) {
   if ( ref === void 0 ) ref = {};

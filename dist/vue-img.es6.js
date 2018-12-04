@@ -121,8 +121,14 @@ const getSize = ({ width, height, adapt }) => {
 };
 
 const getAliSize = ({ width, height, adapt }) => {
-  const w = width && (adapt ? resize(width) : width);
-  const h = height && (adapt ? resize(height) : height);
+  let w = width && (adapt ? resize(width) : width);
+  let h = height && (adapt ? resize(height) : height);
+  if (typeof w === 'number') {
+    w = Math.floor(w);
+  }
+  if (typeof h === 'number') {
+    h = Math.floor(h);
+  }
   if (width && height) return `/resize,w_${w},h_${h},m_fixed`
   if (width) return `/resize,w_${w}`
   if (height) return `/resize,h_${h}`

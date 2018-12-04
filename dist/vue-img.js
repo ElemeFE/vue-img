@@ -144,6 +144,12 @@ var getAliSize = function (ref) {
 
   var w = width && (adapt ? resize(width) : width);
   var h = height && (adapt ? resize(height) : height);
+  if (typeof w === 'number') {
+    w = Math.floor(w);
+  }
+  if (typeof h === 'number') {
+    h = Math.floor(h);
+  }
   if (width && height) { return ("/resize,w_" + w + ",h_" + h + ",m_fixed") }
   if (width) { return ("/resize,w_" + w) }
   if (height) { return ("/resize,h_" + h) }

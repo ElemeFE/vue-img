@@ -64,7 +64,6 @@ const getAliOssSrc = ({
   urlFormatter,
 } = {}) => {
   const _prefix = typeof prefix === 'string' ? prefix : VueImg.aliCdn
-  const _suffix = typeof suffix === 'string' ? suffix : ''
   let src = _prefix + hashToPath(hash)
   // 阿里只支持如下格式图片的处理
   const supportFormats = /(jpg|png|bmp|gif|webp|tiff)$/
@@ -72,10 +71,9 @@ const getAliOssSrc = ({
     const _quality = typeof quality === 'number' ? `/quality,q_${quality}` : ''
     const _size = getAliSize({ width, height, adapt })
     const _format = getAliFormat({ format, fallback })
+    const _suffix = typeof suffix === 'string' ? suffix : ''
     const params = `${_quality}${_format}${_size}${_suffix}`
     src += (params ? `?x-oss-process=image${params}` : '')
-  } else {
-    src += _suffix
   }
   if (typeof urlFormatter === 'function') src = urlFormatter(src)
   return src

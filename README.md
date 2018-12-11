@@ -18,7 +18,7 @@ Vue.use(VueImg, {
   quality: 100,
   adapt: true,
   delay: 2000, // 单位ms,
-  cdnProvider: 'qiniu' // 选择要生成哪种格式的图片地址，目前仅支持 `ali` 和 `qiniu`，默认为 'qiniu'
+  cdnProvider: 'qiniu' // 选择要使用的 CDN 服务提供商，目前仅支持 `ali` 和 `qiniu`，默认为 'qiniu'
 })
 ```
 

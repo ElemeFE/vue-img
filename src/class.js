@@ -12,7 +12,6 @@ export default (opt = {}) => {
           'loading', 'error',
           'quality', 'delay',
           'prefix', 'suffix', 'adapt',
-          'cdn',
         ],
       })
     }
@@ -26,7 +25,7 @@ export default (opt = {}) => {
         keys: [
           'width', 'height', 'quality',
           'format', 'fallback', 'adapt',
-          'prefix', 'suffix', 'cdn'
+          'prefix', 'suffix',
         ],
       })
       return getSrc(params)
@@ -49,7 +48,7 @@ export default (opt = {}) => {
           'width', 'height', 'quality',
           'format', 'fallback', 'adapt',
           'prefix', 'suffix', 'defer',
-          'urlFormatter', 'cdn',
+          'urlFormatter',
         ],
       })
     }

@@ -100,6 +100,11 @@ var inViewport = function (el) {
     && rect.right < window.innerWidth
 };
 
+var cdnMap = {
+  ali: 'ali',
+  qiniu: 'qiniu'
+};
+
 // Translate hash to path
 var hashToPath = function (hash) { return hash.replace(/^(\w)(\w\w)(\w{29}(\w*))$/, '/$1/$2/$3.$4'); };
 
@@ -227,10 +232,11 @@ var getSrc = function (options) {
   if ( options === void 0 ) options = {};
 
   if (!options.hash || typeof options.hash !== 'string') { return '' }
-  if (options.cdn === 'ali') {
+  if (VueImg$1.cdnProvider === cdnMap.ali) {
     return getAliOssSrc(options)
+  } else {
+    return getQiniuSrc(options)
   }
-  return getQiniuSrc(options)
 };
 
 var getImageClass = function (opt) {
@@ -244,8 +250,7 @@ var getImageClass = function (opt) {
       keys: [
         'loading', 'error',
         'quality', 'delay',
-        'prefix', 'suffix', 'adapt',
-        'cdn' ],
+        'prefix', 'suffix', 'adapt' ],
     });
   };
 
@@ -258,8 +263,7 @@ var getImageClass = function (opt) {
       keys: [
         'width', 'height', 'quality',
         'format', 'fallback', 'adapt',
-        'prefix', 'suffix', 'cdn'
-      ],
+        'prefix', 'suffix' ],
     });
     return getSrc(params)
   };
@@ -280,7 +284,7 @@ var getImageClass = function (opt) {
           'width', 'height', 'quality',
           'format', 'fallback', 'adapt',
           'prefix', 'suffix', 'defer',
-          'urlFormatter', 'cdn' ],
+          'urlFormatter' ],
       });
     }
 
@@ -308,6 +312,14 @@ var getImageClass = function (opt) {
 
 // Vue plugin installer
 var install = function (Vue, opt) {
+  if (opt.cdnProvider) {
+    if ([cdnMap.qiniu, cdnMap.ali].indexOf(opt.cdnProvider) === -1) {
+      VueImg$1.cdnProvider = cdnMap.qiniu;
+    }
+  } else {
+    VueImg$1.cdnProvider = cdnMap.qiniu;
+  }
+
   var vImg = getImageClass(opt);
   var promises = [];
 

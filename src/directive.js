@@ -1,16 +1,16 @@
-import { setAttr, inViewport, cdnMap } from './utils'
+import { setAttr, inViewport } from './utils'
 import getImageClass from './class'
 import VueImg from './base'
 
 // Vue plugin installer
 const install = (Vue, opt) => {
-  if (opt.cdnProvider) {
-    if ([cdnMap.qiniu, cdnMap.ali].indexOf(opt.cdnProvider) === -1) {
-      VueImg.cdnProvider = cdnMap.qiniu
-    }
-  } else {
-    VueImg.cdnProvider = cdnMap.qiniu
-  }
+  Object.defineProperty(VueImg, 'cdnProvider', {
+    // 向前兼容，默认使用 qiniu
+    value: opt.cdn === 'ali' ? opt.cdn : 'qiniu',
+    enumerable: true,
+    configurable: false,
+    writable: false,
+  })
 
   const vImg = getImageClass(opt)
   const promises = []

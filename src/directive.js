@@ -3,7 +3,7 @@ import getImageClass from './class'
 import VueImg from './base'
 
 // Vue plugin installer
-const install = (Vue, opt) => {
+const install = (Vue, opt = {}) => {
   Object.defineProperty(VueImg, 'cdnProvider', {
     // 向前兼容，默认使用 qiniu
     value: opt.cdn === 'ali' ? opt.cdn : 'qiniu',

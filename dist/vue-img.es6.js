@@ -264,7 +264,7 @@ var getImageClass = (opt = {}) => {
 };
 
 // Vue plugin installer
-const install = (Vue, opt) => {
+const install = (Vue, opt = {}) => {
   Object.defineProperty(VueImg$1, 'cdnProvider', {
     // 向前兼容，默认使用 qiniu
     value: opt.cdn === 'ali' ? opt.cdn : 'qiniu',

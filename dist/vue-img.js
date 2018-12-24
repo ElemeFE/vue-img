@@ -306,6 +306,8 @@ var getImageClass = function (opt) {
 
 // Vue plugin installer
 var install = function (Vue, opt) {
+  if ( opt === void 0 ) opt = {};
+
   Object.defineProperty(VueImg$1, 'cdnProvider', {
     // 向前兼容，默认使用 qiniu
     value: opt.cdn === 'ali' ? opt.cdn : 'qiniu',

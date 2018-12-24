@@ -51,8 +51,3 @@ export const inViewport = (el) => {
     && rect.left > 0
     && rect.right < window.innerWidth
 }
-
-export const cdnMap = {
-  ali: 'ali',
-  qiniu: 'qiniu'
-}

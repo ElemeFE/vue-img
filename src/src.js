@@ -1,5 +1,5 @@
 import VueImg from './base'
-import { resize, cdnMap } from './utils'
+import { resize } from './utils'
 
 // Translate hash to path
 const hashToPath = hash => hash.replace(/^(\w)(\w\w)(\w{29}(\w*))$/, '/$1/$2/$3.$4')
@@ -100,9 +100,9 @@ const getQiniuSrc = ({
 
 export default (options = {}) => {
   if (!options.hash || typeof options.hash !== 'string') return ''
-  if (VueImg.cdnProvider === cdnMap.ali) {
+  if (VueImg.cdnProvider === 'ali') {
     return getAliOssSrc(options)
-  } else {
-    return getQiniuSrc(options)
   }
+  return getQiniuSrc(options)
 }
+

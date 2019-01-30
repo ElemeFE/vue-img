@@ -326,6 +326,14 @@ var install = function (Vue, opt) {
 
     if (!vImgSrc) { return Promise.resolve() }
 
+    // 防止重复渲染
+    if (binding.oldValue) {
+      var oldVImgIns = new vImg(binding.oldValue);
+      if (vImgSrc === oldVImgIns.toImageSrc()) {
+        return Promise.resolve()
+      }
+    }
+
     var img = new Image();
     var delay = +vImgIns.delay || 5000;
 

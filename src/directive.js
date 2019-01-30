@@ -22,6 +22,14 @@ const install = (Vue, opt = {}) => {
 
     if (!vImgSrc) return Promise.resolve()
 
+    // 防止重复渲染
+    if (binding.oldValue) {
+      const oldVImgIns = new vImg(binding.oldValue)
+      if (vImgSrc === oldVImgIns.toImageSrc()) {
+        return Promise.resolve()
+      }
+    }
+
     const img = new Image()
     const delay = +vImgIns.delay || 5000
 

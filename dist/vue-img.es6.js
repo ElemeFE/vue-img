@@ -155,7 +155,7 @@ const getAliOssSrc = ({
   const _prefix = typeof prefix === 'string' ? prefix : VueImg$1.aliCdn;
   let src = _prefix + hashToPath(hash);
   // 阿里只支持如下格式图片的处理
-  const supportFormats = /(jpg|png|bmp|gif|webp|tiff)$/;
+  const supportFormats = /(jpe?g|png|bmp|gif|webp|tiff)$/;
   if (supportFormats.test(hash)) {
     const _quality = typeof quality === 'number' ? `/quality,q_${quality}` : '';
     const _size = getAliSize({ width, height, adapt });
